@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Forno de Pizza - Realidade Aumentada v10.1</title>
+    <title>Forno de Pizza - Diagnóstico Página Branca v10.2</title>
     <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js"></script>
     <style>
         body {
@@ -18,14 +18,15 @@
             padding: 20px;
             box-sizing: border-box;
             text-align: center;
-            overflow: hidden; 
         }
         #action-container {
-            display: none; /* Começa escondido, será mostrado pelo script */
+            display: flex; /* COMEÇA VISÍVEL POR PADRÃO NO CSS */
             flex-direction: column;
             align-items: center;
             justify-content: center;
             width: 100%;
+            border: 2px dotted green; /* Borda para depuração visual */
+            padding: 10px;
         }
         #start-ar-button {
             background-color: #007aff;
@@ -44,7 +45,7 @@
             color: #333;
             min-height: 40px; 
             line-height: 1.4;
-            border: 1px dashed #aaa; 
+            border: 2px solid black; /* Borda PRETA para fácil visualização */
             padding: 8px;
             width: 90%;
             max-width: 450px;
@@ -52,69 +53,19 @@
             border-radius: 5px;
         }
         model-viewer#pizza-ar-viewer {
-            display: none; /* GARANTE QUE COMECE ESCONDIDO */
-            width: 90%;
-            max-width: 500px; 
-            height: 60vh;   
-            border-radius: 12px;
-            background-color: #ffffff;
+            display: none; /* MODEL-VIEWER COMEÇA ESCONDIDO */
+            /* Estilos de depuração se ele for tornado visível por engano */
+            border: 2px dashed red; 
+            width: 100px; 
+            height: 100px;   
             margin-top: 20px; 
         }
     </style>
 </head>
 <body>
     <div id="action-container">
-        <button id="start-ar-button">Carregar Realidade Aumentada</button>
-        <p id="status-text">Clique no botão para preparar o modelo para AR.</p>
+        <button id="start-ar-button">Testar Botão (v10.2)</button>
+        <p id="status-text">HTML Carregado. Aguardando script JS...</p>
     </div>
 
     <model-viewer
-        id="pizza-ar-viewer"
-        src="pizza oven_resized.glb"
-        alt="Forno de Pizza em Realidade Aumentada"
-        ar
-        ar-modes="webxr scene-viewer quick-look"
-        ar-placement="floor"
-        ar-scale="fixed"
-        autoplay
-        camera-controls
-        shadow-intensity="1"
-        exposure="1.0"
-    >
-    </model-viewer>
-
-    <script>
-        const startArButton = document.getElementById('start-ar-button');
-        const modelViewerElement = document.getElementById('pizza-ar-viewer');
-        const statusText = document.getElementById('status-text');
-        const actionContainer = document.getElementById('action-container');
-        
-        let arFlowInitiated = false; 
-
-        function updateStatus(message, isError = false) {
-            if (statusText) {
-                statusText.textContent = message;
-                statusText.style.color = isError ? 'red' : '#333';
-                statusText.style.fontWeight = isError ? 'bold' : 'normal';
-            }
-            console.log((isError ? "ERRO v10.1: " : "STATUS v10.1: ") + message);
-        }
-
-        function showInitialUiElements() {
-            // Mostra o botão e o texto de status, esconde o model-viewer
-            if (actionContainer) actionContainer.style.display = 'flex';
-            if (modelViewerElement) modelViewerElement.style.display = 'none';
-            updateStatus("Clique no botão para preparar o modelo para AR.");
-            arFlowInitiated = false;
-            console.log("v10.1: Interface no estado inicial.");
-        }
-
-        function showModelViewerUiElements() {
-            // Esconde o botão de iniciar, mostra o model-viewer e atualiza o status
-            if (actionContainer) actionContainer.style.display = 'flex'; // Mantém o status visível
-            if (startArButton) startArButton.style.display = 'none'; // Esconde o botão "Carregar Realidade Aumentada"
-            if (modelViewerElement) modelViewerElement.style.display = 'block'; // MOSTRA o model-viewer
-            
-            if (!modelViewerElement.loaded) {
-                updateStatus('Aguardando modelo 3D carregar... Depois clique no ícone de AR no visualizador.');
-                modelViewerElement.addEventListener('load
