@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Forno de Pizza - Realidade Aumentada Direta</title>
+    <title>Forno de Pizza - Ativar Realidade Aumentada</title>
     <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js"></script>
     <style>
         body {
@@ -12,148 +12,170 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center; /* Centraliza o conteúdo verticalmente */
+            justify-content: center;
             min-height: 100vh;
-            background-color: #f4f6f8;
-            padding: 15px;
+            background-color: #f4f6f8; /* Fundo suave */
+            padding: 20px;
             box-sizing: border-box;
             text-align: center;
         }
-        model-viewer {
-            width: 100%;
-            max-width: 500px;
-            height: 60vh; /* Altura considerável para o modelo */
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            margin-bottom: 20px; /* Espaço entre o viewer e o botão/status */
-            background-color: #ffffff;
+        #action-button-container { /* Novo container para o botão e mensagem */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
         }
-        /* Tenta esconder o botão de AR padrão do model-viewer */
-        model-viewer button[slot="ar-button"] {
-            display: none !important; 
-        }
-        #custom-ar-button {
-            background-color: #007aff; /* Azul vibrante (iOS style) */
+        #start-ar-button {
+            background-color: #007aff; /* Azul iOS */
             color: white;
             border: none;
-            padding: 15px 30px;
+            padding: 18px 35px;
             font-size: 18px;
             font-weight: 500;
             border-radius: 10px;
             cursor: pointer;
             box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-            transition: background-color 0.2s ease, transform 0.1s ease;
+            transition: background-color 0.2s ease, transform 0.1s ease, opacity 0.2s ease;
+            margin-bottom: 15px;
         }
-        #custom-ar-button:active {
+        #start-ar-button:disabled {
+            background-color: #cccccc;
+            cursor: default;
+            opacity: 0.7;
+        }
+        #start-ar-button:active {
             transform: scale(0.98);
         }
-        #ar-status-message {
-            margin-top: 15px;
-            font-size: 14px;
+        #status-text {
+            font-size: 15px;
             color: #333;
-            min-height: 20px; /* Para evitar que o layout pule */
+            min-height: 40px; /* Para 2 linhas de texto, evitar pulos no layout */
+            line-height: 1.4;
+        }
+        model-viewer#pizza-ar-viewer {
+            /* COMEÇA ESCONDIDO e sem ocupar espaço */
+            display: none;
+            width: 100%; /* Ocupará espaço quando visível */
+            max-width: 500px;
+            height: 300px; /* Altura apenas para o caso de fallback (visualização 3D) */
+            border-radius: 12px;
+            background-color: #ffffff;
         }
     </style>
 </head>
 <body>
+    <div id="action-button-container">
+        <button id="start-ar-button">Carregar Realidade Aumentada</button>
+        <p id="status-text">Clique no botão para iniciar.</p>
+    </div>
 
     <model-viewer
-        id="pizza-oven-ar-direct"
+        id="pizza-ar-viewer"
         src="pizza oven_resized.glb"
-        alt="Modelo 3D de um Forno de Pizza"
+        alt="Forno de Pizza em Realidade Aumentada"
         ar
         ar-modes="webxr scene-viewer quick-look"
         ar-placement="floor"
         ar-scale="fixed"
-        camera-controls autoplay
-        shadow-intensity="1"
+        autoplay camera-controls shadow-intensity="1"
         exposure="1.0"
     >
-    </model-viewer>
-
-    <button id="custom-ar-button">Ativar Realidade Aumentada</button>
-    <p id="ar-status-message"></p>
+        </model-viewer>
 
     <script>
-        const modelViewer = document.getElementById('pizza-oven-ar-direct');
-        const customArButton = document.getElementById('custom-ar-button');
-        const arStatusMessage = document.getElementById('ar-status-message');
+        const startArButton = document.getElementById('start-ar-button');
+        const modelViewer = document.getElementById('pizza-ar-viewer');
+        const statusText = document.getElementById('status-text');
 
-        // Esconde o botão de AR padrão do model-viewer via JavaScript também, como garantia
-        // e para poder reexibi-lo se necessário.
-        let defaultArButton = null;
-        const hideDefaultArButton = () => {
-            if (modelViewer.shadowRoot) {
-                defaultArButton = modelViewer.shadowRoot.querySelector('button[slot="ar-button"], .ar-button'); // Tenta seletores comuns
-                 if (defaultArButton) {
-                    console.log("Botão AR padrão encontrado, escondendo.");
-                    defaultArButton.style.display = 'none';
-                } else {
-                    console.log("Botão AR padrão não encontrado no shadowRoot para esconder.");
-                }
-            } else {
-                 // Se o shadowRoot não está pronto, tenta mais tarde ou confia no CSS.
-                 // Para este exemplo, vamos confiar no CSS e tentar pegar o botão no fallback.
-                 console.log("ShadowRoot do model-viewer não disponível para esconder botão AR padrão.");
+        if (!startArButton || !modelViewer || !statusText) {
+            console.error("ERRO DE CONFIGURAÇÃO: Elementos HTML essenciais (botão, model-viewer, ou status) não foram encontrados. Verifique os IDs.");
+            if (statusText) {
+                statusText.textContent = "Erro crítico na página. Tente recarregar.";
             }
-        };
-        
-        // Tenta esconder o botão de AR padrão quando o modelo carregar
-        modelViewer.addEventListener('load', () => {
-            console.log('Modelo 3D carregado.');
-            hideDefaultArButton(); // Tenta esconder o botão AR padrão
-            arStatusMessage.textContent = 'Modelo carregado. Clique no botão para AR.';
-        }, { once: true });
+        } else {
+            startArButton.addEventListener('click', async () => {
+                console.log("Botão 'Carregar Realidade Aumentada' clicado.");
+                statusText.textContent = 'Iniciando e carregando modelo...';
+                startArButton.disabled = true;
+                startArButton.style.opacity = '0.7';
 
-        modelViewer.addEventListener('error', (event) => {
-            console.error('Erro ao carregar o modelo:', event.detail);
-            arStatusMessage.textContent = 'Erro ao carregar o modelo 3D.';
-        });
+                // Passo 1: Tornar o model-viewer visível para que possa carregar e tentar ativar AR
+                modelViewer.style.display = 'block';
+                console.log("model-viewer (pizza-ar-viewer) tornado visível.");
 
-        customArButton.addEventListener('click', async () => {
-            arStatusMessage.textContent = 'Tentando ativar AR...';
-            customArButton.disabled = true; // Desabilita o botão para evitar cliques múltiplos
+                let defaultArButtonFromViewer = null;
 
-            try {
-                // Garante que o modelo está carregado antes de tentar ativar AR
-                if (!modelViewer.loaded) {
-                    console.log('Modelo ainda não totalmente carregado, aguardando...');
-                    await new Promise(resolve => modelViewer.addEventListener('load', resolve, { once: true }));
-                    console.log('Modelo carregado, prosseguindo para ativar AR.');
-                    // Re-tenta esconder o botão padrão após o carregamento, caso não tenha pego antes
-                    hideDefaultArButton(); 
+                try {
+                    // Passo 2: Garantir que o modelo esteja carregado
+                    console.log("Verificando se o modelo 3D está carregado...");
+                    if (!modelViewer.loaded) {
+                        statusText.textContent = 'Carregando modelo 3D... Pode levar alguns segundos.';
+                        console.log("Modelo não carregado. Aguardando evento 'load'.");
+                        await new Promise((resolve, reject) => {
+                            const loadTimeout = setTimeout(() => reject(new Error('Tempo esgotado (15s) ao carregar o modelo 3D.')), 15000);
+                            modelViewer.addEventListener('load', () => { clearTimeout(loadTimeout); resolve(); }, { once: true });
+                            modelViewer.addEventListener('error', (event) => { clearTimeout(loadTimeout); reject(new Error(`Erro ao carregar modelo: ${event.detail}`)); }, { once: true });
+                        });
+                        console.log("Modelo 3D carregado.");
+                    } else {
+                        console.log("Modelo 3D já estava carregado.");
+                    }
+
+                    // Tenta esconder o botão de AR padrão do model-viewer ANTES de chamar activateAR
+                    // A ideia é que a ativação programática seja a primária.
+                    try {
+                        defaultArButtonFromViewer = modelViewer.querySelector('button[slot="ar-button"]'); // Método mais direto
+                        if (!defaultArButtonFromViewer && modelViewer.shadowRoot) {
+                             defaultArButtonFromViewer = modelViewer.shadowRoot.querySelector('button[slot="ar-button"], .ar-button');
+                        }
+                        if (defaultArButtonFromViewer) {
+                            console.log("Botão AR padrão do model-viewer encontrado. Escondendo-o temporariamente.");
+                            defaultArButtonFromViewer.style.display = 'none';
+                        }
+                    } catch(e) { console.warn("Não foi possível acessar/esconder o botão AR padrão do model-viewer:", e); }
+
+
+                    // Passo 3: Tentar ativar AR programaticamente
+                    statusText.textContent = 'Tentando iniciar Realidade Aumentada...';
+                    console.log("Chamando modelViewer.activateAR().");
+                    await modelViewer.activateAR();
+                    console.log("modelViewer.activateAR() chamado. AR deve estar ativo.");
+                    
+                    // Se o AR iniciou, o usuário está na visualização da câmera.
+                    // O botão e texto de status não são mais necessários e podem ser escondidos.
+                    document.getElementById('action-button-container').style.display = 'none';
+                    // O model-viewer em si é substituído pela interface de AR do navegador/OS.
+
+                } catch (error) {
+                    console.error('FALHA AO ATIVAR AR PROGRAMATICAMENTE:', error);
+                    statusText.innerHTML = `Não foi possível iniciar o AR automaticamente: ${error.message}<br><strong>Por favor, clique no botão de AR que aparece no visualizador abaixo para tentar manualmente.</strong>`;
+                    
+                    // Fallback: Se activateAR falhar, o model-viewer já está visível.
+                    // Garantimos que o botão de AR padrão do model-viewer esteja visível.
+                    if (defaultArButtonFromViewer) {
+                        console.log("activateAR() falhou. Mostrando botão AR padrão do model-viewer como fallback.");
+                        defaultArButtonFromViewer.style.display = 'block'; // Ou 'inline-block' ou como ele era
+                    } else {
+                        // Se não pegamos antes, tenta pegar de novo (pode ter aparecido após o 'load')
+                        let finalAttemptButton = modelViewer.querySelector('button[slot="ar-button"]');
+                        if (!finalAttemptButton && modelViewer.shadowRoot) {
+                             finalAttemptButton = modelViewer.shadowRoot.querySelector('button[slot="ar-button"], .ar-button');
+                        }
+                        if (finalAttemptButton) {
+                             console.log("activateAR() falhou. Mostrando botão AR padrão (segunda tentativa de busca).");
+                             finalAttemptButton.style.display = 'block';
+                        } else {
+                            console.warn("Não foi possível encontrar o botão AR padrão do model-viewer para o fallback.");
+                            statusText.innerHTML += "<br>Não foi possível exibir um botão AR alternativo.";
+                        }
+                    }
+                    startArButton.disabled = false; // Reabilita o botão principal
+                    startArButton.style.opacity = '1';
+                    startArButton.style.display = 'none'; // Esconde o botão customizado, pois agora o foco é o fallback
+                    document.getElementById('action-button-container').style.paddingTop = '20px'; // Adiciona espaço se o botão sumir
                 }
-
-                await modelViewer.activateAR();
-                // Se chegou aqui, o AR foi ativado ou está sendo gerenciado pelo navegador.
-                // O usuário deve estar na experiência AR agora.
-                // Não precisamos de mensagem de sucesso aqui, pois a tela mudará para AR.
-                // O botão customizado e a mensagem de status não serão mais relevantes.
-                // Poderíamos até escondê-los:
-                // customArButton.style.display = 'none';
-                // arStatusMessage.style.display = 'none';
-            } catch (error) {
-                console.error('Falha ao ativar AR programaticamente:', error);
-                arStatusMessage.textContent = `Falha ao ativar AR: ${error.message}. Tente o botão AR padrão do visualizador se aparecer.`;
-                
-                // Como fallback, tenta mostrar o botão de AR padrão do model-viewer
-                if (modelViewer.shadowRoot) {
-                    defaultArButton = modelViewer.shadowRoot.querySelector('button[slot="ar-button"], .ar-button');
-                }
-                // Se não encontrou via shadowRoot (pode acontecer), pegamos o slot diretamente
-                if (!defaultArButton) {
-                    defaultArButton = modelViewer.querySelector('button[slot="ar-button"]');
-                }
-
-                if (defaultArButton) {
-                    console.log("Mostrando botão de AR padrão do model-viewer como fallback.");
-                    defaultArButton.style.display = 'block'; // Ou 'inline-block' ou o que for apropriado
-                    defaultArButton.style.opacity = '1';
-                    defaultArButton.style.pointerEvents = 'auto';
-                    arStatusMessage.textContent += ' O botão de AR padrão foi reativado no visualizador.';
-                } else {
-                     arStatusMessage.textContent += ' Não foi possível reativar um botão de AR alternativo.';
-                     console.log("Não foi possível encontrar/mostrar o botão AR padrão como fallback.");
-                }
-                customArButton.disabled = false; // Reabilita o botão customizado para nova tentativa
-            }
+            });
+        }
+    </script>
+</body>
+</html>
