@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Forno de Pizza - Realidade Aumentada v11.3</title>
+    <title>Forno de Pizza - Realidade Aumentada v11.4</title>
     <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js"></script>
     <style>
         body {
@@ -94,10 +94,13 @@
     </model-viewer>
 
     <script>
-        console.log("v11.3: Script iniciado.");
+        // O JavaScript da v11.3/v11.4 é o mesmo da v11.2 que funcionou para carregar o AR.
+        // Nenhuma mudança no script é necessária para o problema de gestos DENTRO do AR nativo,
+        // pois o model-viewer tem controle limitado sobre isso.
+        console.log("v11.4: Script iniciado.");
 
         function initializeARPage() {
-            console.log("v11.3: initializeARPage() chamada após delay.");
+            console.log("v11.4: initializeARPage() chamada após delay.");
 
             const startArButton = document.getElementById('start-ar-button');
             const modelViewerElement = document.getElementById('pizza-ar-viewer');
@@ -112,10 +115,10 @@
                     statusTextDiv.style.color = isError ? 'red' : '#333';
                     statusTextDiv.style.fontWeight = isError ? 'bold' : 'normal';
                 }
-                console.log((isError ? "ERRO v11.3: " : "STATUS v11.3: ") + htmlMessage.replace(/<br>/g, " ").replace(/<ul>/g, "").replace(/<li>/g, "- ").replace(/<\/li>/g, "").replace(/<\/ul>/g, ""));
+                 console.log((isError ? "ERRO v11.4: " : "STATUS v11.4: ") + htmlMessage.replace(/<[^>]*>?/gm, ' ')); // Limpa HTML para log
             }
 
-            function resetPageToInitialState(message = "Clique no botão para iniciar AR (v11.3).") {
+            function resetPageToInitialState(message = "Clique no botão para iniciar AR (v11.4).") {
                 updateStatus(message);
                 if (startArButton) {
                     startArButton.disabled = false;
@@ -124,50 +127,50 @@
                 if (actionContainer) actionContainer.style.display = 'flex'; 
                 if (modelViewerElement) modelViewerElement.style.display = 'none';
                 arWasSuccessfullyLaunched = false;
-                console.log("v11.3: Página resetada para o estado inicial.");
+                console.log("v11.4: Página resetada para o estado inicial.");
             }
 
             document.addEventListener('visibilitychange', () => {
                 if (document.visibilityState === 'visible' && arWasSuccessfullyLaunched) {
-                    console.log("v11.3: Página tornou-se visível após sessão de AR.");
-                    resetPageToInitialState("Sessão AR encerrada. Clique para iniciar novamente (v11.3).");
+                    console.log("v11.4: Página tornou-se visível após sessão de AR.");
+                    resetPageToInitialState("Sessão AR encerrada. Clique para iniciar novamente (v11.4).");
                 }
             });
 
             if (!startArButton || !modelViewerElement || !statusTextDiv || !actionContainer) {
-                updateStatus("Erro crítico: Elementos HTML não encontrados (v11.3).", true);
+                updateStatus("Erro crítico: Elementos HTML não encontrados (v11.4).", true);
                 if(actionContainer) actionContainer.style.display = 'flex';
                 return; 
             }
 
-            resetPageToInitialState("Clique no botão para iniciar AR (v11.3)."); 
+            resetPageToInitialState("Clique no botão para iniciar AR (v11.4)."); 
 
             startArButton.addEventListener('click', async () => {
-                updateStatus('Botão clicado. Iniciando processo AR (v11.3)...');
+                updateStatus('Botão clicado. Iniciando processo AR (v11.4)...');
                 startArButton.disabled = true;
                 startArButton.style.opacity = '0.7';
                 arWasSuccessfullyLaunched = false;
 
                 modelViewerElement.style.display = 'block'; 
-                console.log("v11.3: model-viewer display set to 'block' (pequeno no canto).");
+                console.log("v11.4: model-viewer display set to 'block' (pequeno no canto).");
 
                 try {
-                    console.log("v11.3: Verificando se o modelo 3D está carregado...");
+                    console.log("v11.4: Verificando se o modelo 3D está carregado...");
                     if (!modelViewerElement.loaded) {
                         updateStatus('Carregando modelo 3D...<br>Isso pode levar alguns segundos.');
-                        console.log("v11.3: Modelo não carregado. Aguardando evento 'load'.");
+                        console.log("v11.4: Modelo não carregado. Aguardando evento 'load'.");
                         await new Promise((resolve, reject) => {
                             const loadTimeout = setTimeout(() => reject(new Error('Tempo esgotado (30s) ao carregar o modelo 3D.')), 30000); 
                             modelViewerElement.addEventListener('load', () => { clearTimeout(loadTimeout); resolve(); }, { once: true });
                             modelViewerElement.addEventListener('error', (event) => { 
                                 clearTimeout(loadTimeout); 
-                                console.error("v11.3: Erro no carregamento do modelo:", event.detail);
+                                console.error("v11.4: Erro no carregamento do modelo:", event.detail);
                                 reject(new Error(`Erro ao carregar modelo: ${event.detail?.toString()}`)); 
                             }, { once: true });
                         });
-                        console.log("v11.3: Modelo 3D carregado.");
+                        console.log("v11.4: Modelo 3D carregado.");
                     } else {
-                        console.log("v11.3: Modelo 3D já estava carregado.");
+                        console.log("v11.4: Modelo 3D já estava carregado.");
                     }
                     
                     const instructionsHTML = `
@@ -179,28 +182,28 @@
                         </ul>
                         Tentando iniciar Realidade Aumentada...`;
                     updateStatus(instructionsHTML);
-                    console.log("v11.3: Chamando modelViewer.activateAR().");
+                    console.log("v11.4: Chamando modelViewer.activateAR().");
                     
                     await new Promise(resolve => setTimeout(resolve, 2500)); 
 
                     if (actionContainer) actionContainer.style.display = 'none'; 
 
                     await modelViewerElement.activateAR();
-                    console.log("v11.3: modelViewer.activateAR() chamado com sucesso. Usuário deve estar em AR.");
+                    console.log("v11.4: modelViewer.activateAR() chamado com sucesso. Usuário deve estar em AR.");
                     arWasSuccessfullyLaunched = true; 
                 } catch (error) {
-                    console.error('FALHA AO TENTAR ATIVAR AR (v11.3):', error);
+                    console.error('FALHA AO TENTAR ATIVAR AR (v11.4):', error);
                     resetPageToInitialState(`Falha ao iniciar AR: ${error.message}. Tente novamente.`, true);
                 }
             });
-            console.log("v11.3: Script principal (initializeARPage) configurado.");
+            console.log("v11.4: Script principal (initializeARPage) configurado.");
         } 
 
         document.addEventListener('DOMContentLoaded', () => {
-            console.log("v11.3: Evento DOMContentLoaded disparado.");
+            console.log("v11.4: Evento DOMContentLoaded disparado.");
             setTimeout(initializeARPage, 500); 
         });
-        console.log("v11.3: Script finalizado (após adicionar listener DOMContentLoaded).");
+        console.log("v11.4: Script finalizado (após adicionar listener DOMContentLoaded).");
     </script>
 </body>
 </html>
