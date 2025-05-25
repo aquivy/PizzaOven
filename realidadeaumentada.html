@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Forno de Pizza - Realidade Aumentada v10</title>
+    <title>Forno de Pizza - Realidade Aumentada v10.1</title>
     <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js"></script>
     <style>
         body {
@@ -21,7 +21,7 @@
             overflow: hidden; 
         }
         #action-container {
-            display: flex; /* Controla a visibilidade do botão inicial e do status */
+            display: none; /* Começa escondido, será mostrado pelo script */
             flex-direction: column;
             align-items: center;
             justify-content: center;
@@ -39,11 +39,6 @@
             box-shadow: 0 2px 6px rgba(0,0,0,0.2);
             margin-bottom: 15px;
         }
-        #start-ar-button:disabled { /* Estilo para quando estiver desabilitado, não usado ativamente aqui */
-            background-color: #cccccc;
-            cursor: default;
-            opacity: 0.7;
-        }
         #status-text {
             font-size: 15px;
             color: #333;
@@ -57,13 +52,13 @@
             border-radius: 5px;
         }
         model-viewer#pizza-ar-viewer {
-            display: none; /* Começa escondido */
+            display: none; /* GARANTE QUE COMECE ESCONDIDO */
             width: 90%;
-            max-width: 500px; /* Tamanho do visualizador 3D quando visível */
-            height: 60vh;   /* Altura do visualizador 3D quando visível */
+            max-width: 500px; 
+            height: 60vh;   
             border-radius: 12px;
             background-color: #ffffff;
-            margin-top: 20px; /* Espaço acima do model-viewer quando ele aparece */
+            margin-top: 20px; 
         }
     </style>
 </head>
@@ -82,10 +77,11 @@
         ar-placement="floor"
         ar-scale="fixed"
         autoplay
-        camera-controls shadow-intensity="1"
+        camera-controls
+        shadow-intensity="1"
         exposure="1.0"
     >
-        </model-viewer>
+    </model-viewer>
 
     <script>
         const startArButton = document.getElementById('start-ar-button');
@@ -93,7 +89,7 @@
         const statusText = document.getElementById('status-text');
         const actionContainer = document.getElementById('action-container');
         
-        let arFlowInitiated = false; // Flag para saber se o usuário iniciou o fluxo de AR
+        let arFlowInitiated = false; 
 
         function updateStatus(message, isError = false) {
             if (statusText) {
@@ -101,68 +97,24 @@
                 statusText.style.color = isError ? 'red' : '#333';
                 statusText.style.fontWeight = isError ? 'bold' : 'normal';
             }
-            console.log((isError ? "ERRO v10: " : "STATUS v10: ") + message);
+            console.log((isError ? "ERRO v10.1: " : "STATUS v10.1: ") + message);
         }
 
-        function showInitialState() {
-            updateStatus("Clique no botão para preparar o modelo para AR.");
+        function showInitialUiElements() {
+            // Mostra o botão e o texto de status, esconde o model-viewer
             if (actionContainer) actionContainer.style.display = 'flex';
-            if (startArButton) startArButton.style.display = 'inline-block'; // Mostra o botão inicial
-            if (modelViewerElement) modelViewerElement.style.display = 'none'; // Esconde o model-viewer
+            if (modelViewerElement) modelViewerElement.style.display = 'none';
+            updateStatus("Clique no botão para preparar o modelo para AR.");
             arFlowInitiated = false;
-            console.log("v10: Página no estado inicial.");
+            console.log("v10.1: Interface no estado inicial.");
         }
 
-        function showARPreparationState() {
-            updateStatus("Modelo 3D carregado. Por favor, clique no botão de AR (ícone de cubo/celular) que apareceu DENTRO do visualizador para iniciar a Realidade Aumentada.", false);
+        function showModelViewerUiElements() {
+            // Esconde o botão de iniciar, mostra o model-viewer e atualiza o status
             if (actionContainer) actionContainer.style.display = 'flex'; // Mantém o status visível
-            if (startArButton) startArButton.style.display = 'none'; // Esconde o botão inicial
-            if (modelViewerElement) modelViewerElement.style.display = 'block'; // Mostra o model-viewer
-            arFlowInitiated = true;
-            console.log("v10: Estado de preparação para AR. Model-viewer visível.");
-        }
-        
-        // Listener para quando a aba/página se torna visível novamente
-        // (acontece quando o usuário sai do modo AR nativo)
-        document.addEventListener('visibilitychange', () => {
-            // Só reseta se o fluxo de AR tinha sido iniciado e a página ficou visível
-            if (document.visibilityState === 'visible' && arFlowInitiated) {
-                console.log("v10: Página tornou-se visível após fluxo de AR.");
-                // Aqui, assumimos que o usuário saiu do AR e quer voltar ao estado inicial.
-                showInitialState(); 
-            }
-        });
-
-        // Verifica elementos essenciais no carregamento do DOM
-        document.addEventListener('DOMContentLoaded', () => {
-            if (!startArButton || !modelViewerElement || !statusText || !actionContainer) {
-                updateStatus("Erro crítico na configuração da página. Elementos faltando.", true);
-                return; 
-            }
-
-            showInitialState(); // Garante o estado inicial ao carregar
-
-            startArButton.addEventListener('click', () => {
-                updateStatus('Botão clicado. Carregando visualizador 3D para AR...');
-                console.log("v10: Botão 'Carregar Realidade Aumentada' clicado.");
-                
-                // Mostra o model-viewer e instrui o usuário
-                showARPreparationState();
-
-                // Não chamamos activateAR() programaticamente.
-                // O usuário clicará no botão de AR padrão do model-viewer.
-                // O model-viewer precisa de um momento para carregar e mostrar seu botão AR.
-                // Podemos adicionar uma verificação se o modelo carregou, mas por ora, vamos simplificar.
-                if (!modelViewerElement.loaded) {
-                    updateStatus('Aguardando modelo 3D carregar completamente no visualizador... Depois clique no ícone de AR no visualizador.');
-                    modelViewerElement.addEventListener('load', () => {
-                        updateStatus('Modelo 3D carregado. Por favor, clique no botão de AR (ícone de cubo/celular) DENTRO do visualizador.');
-                        console.log("v10: Modelo carregado no visualizador.");
-                    }, { once: true });
-                }
-            });
-            console.log("v10: Script configurado.");
-        });
-    </script>
-</body>
-</html>
+            if (startArButton) startArButton.style.display = 'none'; // Esconde o botão "Carregar Realidade Aumentada"
+            if (modelViewerElement) modelViewerElement.style.display = 'block'; // MOSTRA o model-viewer
+            
+            if (!modelViewerElement.loaded) {
+                updateStatus('Aguardando modelo 3D carregar... Depois clique no ícone de AR no visualizador.');
+                modelViewerElement.addEventListener('load
