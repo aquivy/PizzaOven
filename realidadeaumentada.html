@@ -1,96 +1,22 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Forno de Pizza - Diagnóstico AR v7</title>
-    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js"></script>
-    <style>
-        body {
-            margin: 0; font-family: sans-serif; display: flex; flex-direction: column;
-            align-items: center; justify-content: center; min-height: 100vh;
-            background-color: #f0f0f0; padding: 20px; box-sizing: border-box; text-align: center;
-        }
-        #action-container { display: flex; flex-direction: column; align-items: center; }
-        #start-ar-button {
-            background-color: #007aff; color: white; border: none; padding: 18px 35px;
-            font-size: 18px; font-weight: 500; border-radius: 10px; cursor: pointer;
-            margin-bottom: 15px;
-        }
-        #status-text {
-            font-size: 16px; color: #333; min-height: 40px; line-height: 1.4;
-            border: 2px solid #ccc; padding: 10px; background-color: #fff;
-            width: 80%; max-width: 400px;
-        }
-        model-viewer#pizza-ar-viewer {
-            display: none; /* Começa escondido */
-            position: absolute; 
-            left: -9999px; 
-            top: -9999px;  
-            width: 1px; /* Mínimo para não interferir, mas existir */
-            height: 1px;
-        }
-    </style>
-</head>
-<body>
-    <div id="action-container">
-        <button id="start-ar-button">Testar Clique (com model-viewer na página)</button>
-        <p id="status-text">Página carregada. Script v7 pronto.</p>
-    </div>
-
-    <model-viewer
-        id="pizza-ar-viewer"
-        src="pizza oven_resized.glb"
-        alt="Forno de Pizza"
-        ar
-        ar-modes="webxr scene-viewer quick-look"
-        ar-placement="floor"
-        ar-scale="fixed"
-        style="display: none; position: absolute; left: -9999px; width:1px; height:1px;" /* Dupla garantia de estar escondido */
-    >
-    </model-viewer>
-
+<p id="status-text">Página carregada. Script v7 pronto.</p> ...
     <script>
-        // --- SCRIPT DE DIAGNÓSTICO DE CLIQUE v7 (com model-viewer presente) ---
-        console.log("Diagnóstico v7: Script iniciado.");
+        console.log("Diagnóstico v7: Script iniciado."); // Log 1
 
         document.addEventListener('DOMContentLoaded', () => {
-            console.log("Diagnóstico v7: DOM completamente carregado.");
+            console.log("Diagnóstico v7: DOM completamente carregado."); // Log 2
 
             const startArButton = document.getElementById('start-ar-button');
-            const statusText = document.getElementById('status-text');
-            const modelViewerElement = document.getElementById('pizza-ar-viewer'); // Pegamos a referência, mas não usamos ainda
+            const statusText = document.getElementById('status-text'); // Gets the p element
+            const modelViewerElement = document.getElementById('pizza-ar-viewer');
 
-            let elementsOk = true;
-            let missingElements = [];
-
-            if (!startArButton) { missingElements.push("start-ar-button"); elementsOk = false; }
-            if (!statusText) { missingElements.push("status-text"); elementsOk = false; }
-            if (!modelViewerElement) { missingElements.push("pizza-ar-viewer"); elementsOk = false; }
-
+            // ... (element checking logic) ...
 
             if (elementsOk) {
-                statusText.textContent = "Elementos ENCONTRADOS (v7). Aguardando clique...";
-                statusText.style.color = "green";
-                console.log("Diagnóstico v7: Botão, status e model-viewer encontrados.");
-
-                startArButton.addEventListener('click', () => {
-                    // A ÚNICA AÇÃO DESTE CLIQUE É MUDAR O TEXTO DE STATUS
-                    console.log("Diagnóstico v7: Botão FOI CLICADO.");
-                    statusText.textContent = "v7: CLIQUE DETECTADO! O botão funciona mesmo com model-viewer na página.";
-                    statusText.style.color = "blue";
-                    statusText.style.fontWeight = "bold";
-                    
-                    startArButton.disabled = true;
-                    startArButton.textContent = "v7: Clique Registrado";
-                    startArButton.style.opacity = "0.7";
-                });
-
+                statusText.textContent = "Elementos ENCONTRADOS (v7). Aguardando clique..."; // Should change text here
+                // ... add event listener ...
             } else {
-                const errorMsg = "ERRO GRAVE (v7): Elemento(s) HTML não encontrado(s): " + missingElements.join(', ') + ". Verifique os IDs no HTML.";
-                console.error("Diagnóstico v7: " + errorMsg);
-                
-                const body = document.body;
-                const errorDiv = document.createElement('div');
-                errorDiv.style.color = "red"; errorDiv.style.fontWeight = "bold"; errorDiv.style.marginTop = "20px";
-                error
+                // ... error handling ...
+            }
+            console.log("Diagnóstico v7: Configuração do script de diagnóstico v7 concluída."); // Log 3
+        });
+    </script>
