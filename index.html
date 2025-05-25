@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visualização 3D e AR do Forno de Pizza</title>
+    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
+    <style>
+        body {
+            font-family: sans-serif;
+            text-align: center;
+            margin: 20px;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        h1, h2 {
+            color: #0056b3;
+        }
+        model-viewer {
+            width: 90%; /* Ocupa 90% da largura da tela */
+            max-width: 800px; /* Limita a largura máxima para desktop */
+            height: 450px; /* Altura fixa para o visualizador */
+            margin: 20px auto; /* Centraliza o elemento */
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .instructions {
+            background-color: #e9ecef;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px auto;
+            max-width: 800px;
+            text-align: left;
+            line-height: 1.6;
+        }
+        a {
+            color: #007bff;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <h1>Visualização 3D Interativa e Realidade Aumentada do Forno de Pizza</h1>
+
+    <div class="instructions">
+        <p>Aqui você pode interagir com o modelo 3D diretamente no navegador. Para ver em Realidade Aumentada, siga as instruções abaixo:</p>
+        <ul>
+            <li><strong>Para Visualização 3D:</strong> Use o mouse para girar, aplicar zoom e arrastar o modelo abaixo.</li>
+            <li><strong>Para Realidade Aumentada (AR):</strong>
+                <ul>
+                    <li>Em dispositivos **Android** compatíveis, clique no botão <img src="https://modelviewer.dev/shared-assets/icons/ar-icon.svg" alt="Ícone AR" width="16px" height="16px"> "View in your space" ou "Ver no seu espaço" que aparecerá no modelo abaixo.</li>
+                    <li>Em dispositivos **iOS/iPadOS (iPhone/iPad)** compatíveis, clique no botão <img src="https://modelviewer.dev/shared-assets/icons/ar-icon.svg" alt="Ícone AR" width="16px" height="16px"> "AR" ou "Object" que aparecerá no modelo abaixo.</li>
+                    <li>O modelo tentará se "ancorar" em um plano (como o chão ou uma mesa) no seu ambiente real.</li>
+                </ul>
+            </li>
+        </ul>
+    </div>
+
+    <model-viewer
+        src="https://github.com/omurilosilva/Forno-de-Pizza/raw/refs/heads/main/pizza%20oven_resized.glb"
+        alt="Modelo 3D de um Forno de Pizza"
+        ar
+        ar-modes="webxr quick-look scene-viewer"
+        camera-controls
+        shadow-intensity="1"
+        autoplay
+        exposure="1.0"
+        >
+    </model-viewer>
+
+    <h2>Link para a Visualização 3D e AR (Principal)</h2>
+    <p>Use o link desta página para compartilhar a visualização principal:</p>
+    <p><a id="main-link" href="#">Carregando...</a></p>
+
+    <h2>Link Direto para AR (iOS/iPadOS Quick Look)</h2>
+    <p>Este link é mais direto para usuários de iPhone/iPad. Se o dispositivo for compatível, ele tentará abrir diretamente o modo AR via Quick Look.</p>
+    <p><a id="ar-ios-link" href="#">Carregando...</a></p>
+    <p><em>(Nota: Para que o link direto de AR funcione corretamente em iOS, o servidor que hospeda o .glb deve ter os tipos MIME corretos configurados. O GitHub geralmente lida bem com isso para arquivos .glb)</em></p>
+
+    <script>
+        // Ao carregar a página, preenche os links com a URL atual
+        document.addEventListener('DOMContentLoaded', function() {
+            const currentUrl = window.location.href;
+            document.getElementById('main-link').href = currentUrl;
+            document.getElementById('main-link').textContent = currentUrl;
+
+            // O link direto para AR em iOS é o GLB com '#ar' no final
+            const glbUrl = "https://github.com/omurilosilva/Forno-de-Pizza/raw/refs/heads/main/pizza%20oven_resized.glb";
+            document.getElementById('ar-ios-link').href = glbUrl + '#ar';
+            document.getElementById('ar-ios-link').textContent = glbUrl + '#ar';
+        });
+    </script>
+</body>
+</html>
