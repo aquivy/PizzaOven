@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Forno de Pizza - Diagnóstico AR v8a</title>
+    <title>Forno de Pizza - Diagnóstico AR v8b</title>
+    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js"></script>
     <style>
         body {
             margin: 0; font-family: sans-serif; display: flex; flex-direction: column;
@@ -21,78 +22,61 @@
             border: 2px solid #ccc; padding: 10px; background-color: #fff;
             width: 80%; max-width: 400px;
         }
-        /* O elemento model-viewer existe, mas seu script de definição não foi carregado */
-        model-viewer#pizza-ar-viewer {
-            display: block; /* Vamos deixá-lo como block para ver como o navegador lida com um custom element não definido */
-            width: 300px; 
-            height: 200px;
-            border: 2px dashed red; /* Para vermos a caixa do elemento não definido */
-            margin-top: 20px;
-            padding: 10px;
-        }
+        /* Não há elemento model-viewer no HTML desta vez */
     </style>
 </head>
 <body>
     <div id="action-container">
-        <button id="start-ar-button">Testar Clique (Elemento MV existe, Script MV ausente)</button>
-        <p id="status-text">Página carregada. Script v8a pronto.</p>
+        <button id="start-ar-button">Testar Clique (Script MV presente, Elemento MV ausente)</button>
+        <p id="status-text">Página carregada. Script v8b pronto.</p>
     </div>
 
-    <model-viewer id="pizza-ar-viewer">
-        <p style="color:red; font-weight:bold;">Se você vê esta mensagem, o elemento &lt;model-viewer&gt; é apenas uma tag desconhecida sem o script dele.</p>
-    </model-viewer>
-
     <script>
-        // --- SCRIPT DE DIAGNÓSTICO DE CLIQUE v8a ---
-        console.log("Diagnóstico v8a: Script iniciado.");
+        // --- SCRIPT DE DIAGNÓSTICO DE CLIQUE v8b ---
+        console.log("Diagnóstico v8b: Script iniciado.");
 
         document.addEventListener('DOMContentLoaded', () => {
-            console.log("Diagnóstico v8a: DOM completamente carregado.");
+            console.log("Diagnóstico v8b: DOM completamente carregado.");
 
             const startArButton = document.getElementById('start-ar-button');
             const statusText = document.getElementById('status-text');
-            const modelViewerElement = document.getElementById('pizza-ar-viewer'); 
+            // Não tentamos pegar o modelViewerElement pois ele não existe no HTML
 
             let elementsOk = true;
             let missingElements = [];
 
             if (!startArButton) { missingElements.push("start-ar-button"); elementsOk = false; }
             if (!statusText) { missingElements.push("status-text"); elementsOk = false; }
-            if (!modelViewerElement) { missingElements.push("pizza-ar-viewer (elemento)"); elementsOk = false; }
+            // Não verificamos por pizza-ar-viewer
 
 
             if (elementsOk) {
-                statusText.textContent = "v8a: Elementos ENCONTRADOS. Aguardando clique...";
+                statusText.textContent = "v8b: Elementos (botão/status) ENCONTRADOS. Aguardando clique...";
                 statusText.style.color = "green";
-                console.log("Diagnóstico v8a: Botão, status e elemento model-viewer (tag) encontrados.");
+                console.log("Diagnóstico v8b: Botão e status encontrados.");
 
                 startArButton.addEventListener('click', () => {
-                    console.log("Diagnóstico v8a: Botão FOI CLICADO.");
-                    statusText.textContent = "v8a: CLIQUE DETECTADO! O script do botão funciona.";
+                    console.log("Diagnóstico v8b: Botão FOI CLICADO.");
+                    statusText.textContent = "v8b: CLIQUE DETECTADO! O script do botão funciona mesmo com script MV carregado.";
                     statusText.style.color = "blue";
                     statusText.style.fontWeight = "bold";
                     
                     startArButton.disabled = true;
-                    startArButton.textContent = "v8a: Clique Registrado";
+                    startArButton.textContent = "v8b: Clique Registrado";
                     startArButton.style.opacity = "0.7";
-
-                    // Teste para ver se podemos interagir com o elemento 'model-viewer' como um elemento genérico
-                    if (modelViewerElement) {
-                        modelViewerElement.innerHTML = "<p style='color:blue;'>Conteúdo alterado pelo clique!</p>";
-                    }
                 });
 
             } else {
-                const errorMsg = "ERRO GRAVE (v8a): Elemento(s) HTML não encontrado(s): " + missingElements.join(', ') + ".";
-                console.error("Diagnóstico v8a: " + errorMsg);
+                const errorMsg = "ERRO GRAVE (v8b): Elemento(s) HTML não encontrado(s): " + missingElements.join(', ') + ".";
+                console.error("Diagnóstico v8b: " + errorMsg);
                 if (statusText) {
                     statusText.textContent = errorMsg;
                     statusText.style.color = "red";
                 } else {
-                    alert(errorMsg); // Fallback se statusText não existir
+                    alert(errorMsg); 
                 }
             }
-            console.log("Diagnóstico v8a: Configuração do script de diagnóstico v8a concluída.");
+            console.log("Diagnóstico v8b: Configuração do script de diagnóstico v8b concluída.");
         });
     </script>
 </body>
