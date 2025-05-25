@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Forno de Pizza - Iniciar Realidade Aumentada</title>
+    <title>Forno de Pizza - Teste AR Simples</title>
     <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js"></script>
     <style>
         body {
@@ -14,96 +14,47 @@
             align-items: center;
             justify-content: center;
             min-height: 100vh;
-            background-color: #e9ecef; /* Um fundo suave */
+            background-color: #f0f0f0; /* Fundo cinza claro */
             text-align: center;
             padding: 20px;
             box-sizing: border-box;
         }
-        #ar-prompt { /* Estilo para o container do botão */
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
+        h1 {
+            color: #333;
+            margin-bottom: 15px;
         }
-        #ar-button {
-            background-color: #007bff;
-            color: white;
-            border: none;
-            padding: 20px 40px;
-            font-size: 20px;
-            border-radius: 8px;
-            cursor: pointer;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-            transition: background-color 0.3s ease;
-            margin-bottom: 20px; /* Espaço abaixo do botão */
-        }
-        #ar-button:hover {
-            background-color: #0056b3;
-        }
-        model-viewer { /* O ID é 'pizza-oven-viewer' */
-            width: 300px; /* Tamanho menor para o preview inicial, se desejar */
-            height: 250px;
-            border-radius: 8px;
-            /* Inicialmente pode estar oculto ou ser um pequeno preview */
-            /* display: none; */ /* Descomente se quiser ocultar inicialmente */
-        }
-        .status-message {
-            margin-top: 15px;
+        p {
             color: #555;
-            font-size: 14px;
+            margin-bottom: 20px;
+            max-width: 600px;
+        }
+        model-viewer {
+            width: 90%; /* Ocupa 90% da largura da tela */
+            max-width: 600px; /* Largura máxima */
+            height: 70vh; /* Altura relativa à tela */
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            background-color: #ffffff; /* Fundo branco para o visualizador */
         }
     </style>
 </head>
 <body>
-    <div id="ar-prompt">
-        <button id="ar-button">Iniciar Realidade Aumentada</button>
-        <p class="status-message">Clique no botão para ver o forno de pizza no seu ambiente.</p>
-    </div>
+    <h1>Teste de Realidade Aumentada</h1>
+    <p>O modelo 3D do forno de pizza deve aparecer abaixo. Se o seu dispositivo e navegador forem compatíveis com Realidade Aumentada, um botão de AR (geralmente um ícone de um cubo ou celular) deverá aparecer no canto inferior direito do visualizador. Por favor, clique nesse botão para tentar iniciar a experiência de AR.</p>
 
     <model-viewer
-        id="pizza-oven-viewer"
+        id="pizza-oven-viewer-test"
         src="pizza oven_resized.glb"
-        alt="Modelo 3D de um Forno de Pizza para Realidade Aumentada"
+        alt="Modelo 3D de um Forno de Pizza para Teste AR"
         ar
         ar-modes="webxr scene-viewer quick-look"
         ar-placement="floor"
-        ar-scale="fixed"
-        camera-controls shadow-intensity="1"
+        ar-scale="fixed" 
+        camera-controls
+        autoplay shadow-intensity="1"
         exposure="1.0"
-        style="display: none;" >
-        <button slot="ar-button" style="background-color: white; border-radius: 4px; border: none; position: absolute; top: 16px; right: 16px; display: none; opacity: 0; pointer-events: none;">
-            👋 Ativar AR
-        </button>
-    </model-viewer>
+    >
+        </model-viewer>
 
-    <script>
-        const arButton = document.getElementById('ar-button');
-        const modelViewer = document.getElementById('pizza-oven-viewer');
-        const arPromptContainer = document.getElementById('ar-prompt');
-        // Pega o elemento <p> dentro do ar-prompt para mostrar mensagens de status
-        const statusMessageElement = arPromptContainer.querySelector('.status-message');
-
-        if (!arButton || !modelViewer || !arPromptContainer || !statusMessageElement) {
-            console.error('ERRO CRÍTICO: Um ou mais elementos HTML essenciais não foram encontrados. Verifique os IDs: ar-button, pizza-oven-viewer, ar-prompt, e a classe .status-message dentro de ar-prompt.');
-            // Tenta exibir o erro na tela se o statusMessageElement existir, mesmo que outros falhem
-            if (statusMessageElement) {
-                statusMessageElement.textContent = 'Erro crítico na página. Elementos não encontrados.';
-                if(arPromptContainer) arPromptContainer.style.display = 'block';
-            }
-        } else {
-            console.log('Script carregado. Elementos AR Button, Model Viewer, e Prompt Container encontrados.');
-        }
-
-        arButton.addEventListener('click', async () => {
-            console.log('Botão "Iniciar Realidade Aumentada" clicado.');
-            statusMessageElement.textContent = 'Preparando para iniciar AR...';
-            arPromptContainer.style.display = 'block'; // Garante que o container de status esteja visível
-
-            // Esconde o botão principal para evitar cliques repetidos enquanto processa
-            arButton.style.display = 'none';
-            
-            // Mostra o model-viewer
-            modelViewer.style.display = 'block';
-            console.log('Model viewer (pizza-oven-viewer) teve seu display alterado para "block".');
-
-            try {
+    </body>
+</html>
