@@ -3,125 +3,91 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Forno de Pizza - Realidade Aumentada v4</title>
-    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js"></script>
+    <title>Forno de Pizza - Diagnóstico AR v5</title>
     <style>
         body {
-            margin: 0;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            background-color: #f4f6f8;
-            padding: 20px;
-            box-sizing: border-box;
-            text-align: center;
-            overflow: hidden; 
+            margin: 0; font-family: sans-serif; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; min-height: 100vh;
+            background-color: #f0f0f0; padding: 20px; box-sizing: border-box; text-align: center;
         }
-        #action-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            /* z-index para garantir que fique sobre o model-viewer 'escondido' se houver sobreposição */
-            position: relative; 
-            z-index: 10;
-        }
+        #action-container { display: flex; flex-direction: column; align-items: center; }
         #start-ar-button {
-            background-color: #007aff;
-            color: white;
-            border: none;
-            padding: 18px 35px;
-            font-size: 18px;
-            font-weight: 500;
-            border-radius: 10px;
-            cursor: pointer;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-            transition: background-color 0.2s ease, transform 0.1s ease, opacity 0.2s ease;
+            background-color: #007aff; color: white; border: none; padding: 18px 35px;
+            font-size: 18px; font-weight: 500; border-radius: 10px; cursor: pointer;
             margin-bottom: 15px;
         }
-        #start-ar-button:disabled {
-            background-color: #cccccc;
-            cursor: default;
-            opacity: 0.7;
-        }
-        #start-ar-button:active {
-            transform: scale(0.98);
-        }
         #status-text {
-            font-size: 15px;
-            color: #333;
-            min-height: 40px; 
-            line-height: 1.4;
-        }
-        model-viewer#pizza-ar-viewer {
-            /* Começa escondido */
-            display: none; 
-            /* Quando 'display:block', será posicionado fora da tela */
-            position: absolute; 
-            left: -9999px; /* Move para muito longe à esquerda */
-            top: -9999px;  /* Move para muito longe acima */
-            width: 500px; /* Um tamanho razoável para renderização */
-            height: 500px;
-            /* Não precisa de opacidade 0 ou z-index -1 aqui, pois já está fora da tela */
+            font-size: 16px; color: #333; min-height: 40px; line-height: 1.4;
+            border: 2px solid #ccc; padding: 10px; background-color: #fff;
         }
     </style>
 </head>
 <body>
     <div id="action-container">
-        <button id="start-ar-button">Carregar Realidade Aumentada</button>
-        <p id="status-text">Clique no botão para iniciar.</p>
+        <button id="start-ar-button">Testar Clique Neste Botão</button>
+        <p id="status-text">Página carregada. Script de diagnóstico pronto.</p>
     </div>
 
-    <model-viewer
-        id="pizza-ar-viewer"
-        src="pizza oven_resized.glb"
-        alt="Forno de Pizza em Realidade Aumentada"
-        ar
-        ar-modes="webxr scene-viewer quick-look"
-        ar-placement="floor"
-        ar-scale="fixed"
-        autoplay
-        camera-controls
-        shadow-intensity="1"
-        exposure="1.0"
-    >
-    </model-viewer>
-
     <script>
-        const startArButton = document.getElementById('start-ar-button');
-        const modelViewerElement = document.getElementById('pizza-ar-viewer');
-        const statusText = document.getElementById('status-text');
-        const actionContainer = document.getElementById('action-container');
-        let arWasSuccessfullyLaunched = false; // Flag para controlar o reset
+        // --- SCRIPT DE DIAGNÓSTICO DE CLIQUE v5 ---
+        console.log("Diagnóstico v5: Script iniciado.");
 
-        function resetPageToInitialState(message = "Clique no botão para iniciar novamente.") {
-            statusText.textContent = message;
-            startArButton.disabled = false;
-            startArButton.style.opacity = '1';
-            actionContainer.style.display = 'flex'; 
-            modelViewerElement.style.display = 'none'; // Garante que o model-viewer seja escondido
-            console.log("Página resetada para o estado inicial. Model-viewer escondido.");
-            arWasSuccessfullyLaunched = false; // Reseta a flag
-        }
+        // Espera o DOM estar completamente carregado para garantir que os elementos existam
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log("Diagnóstico v5: DOM completamente carregado.");
 
-        // Listener para quando a aba/página se torna visível novamente
-        // Isso acontece quando o usuário sai do modo AR nativo
-        document.addEventListener('visibilitychange', () => {
-            if (document.visibilityState === 'visible' && arWasSuccessfullyLaunched) {
-                console.log("Página tornou-se visível após sessão de AR.");
-                resetPageToInitialState("Sessão de AR encerrada. Clique para iniciar novamente.");
+            const startArButton = document.getElementById('start-ar-button');
+            const statusText = document.getElementById('status-text');
+
+            // Verifica se os elementos foram encontrados e reporta na tela
+            if (startArButton && statusText) {
+                statusText.textContent = "Elementos (botão e texto de status) ENCONTRADOS. Aguardando clique no botão...";
+                statusText.style.color = "green";
+                console.log("Diagnóstico v5: Botão e texto de status encontrados.");
+
+                startArButton.addEventListener('click', () => {
+                    console.log("Diagnóstico v5: Botão 'Testar Clique Neste Botão' FOI CLICADO.");
+                    statusText.textContent = "CLIQUE DETECTADO! O JavaScript está respondendo ao botão.";
+                    statusText.style.color = "blue";
+                    statusText.style.fontWeight = "bold";
+                    
+                    // Desabilita o botão para mostrar que o evento ocorreu
+                    startArButton.disabled = true;
+                    startArButton.textContent = "Clique Funcionou!";
+                    startArButton.style.opacity = "0.7";
+                });
+
+            } else {
+                // Se um dos elementos não foi encontrado, mostra erro claro no parágrafo de status (se ele existir)
+                // ou no console.
+                let errorMsg = "ERRO GRAVE: ";
+                if (!startArButton) errorMsg += "Botão 'start-ar-button' NÃO ENCONTRADO. ";
+                if (!statusText) errorMsg += "Parágrafo 'status-text' NÃO ENCONTRADO. ";
+                errorMsg += "Verifique os IDs no HTML.";
+                
+                console.error("Diagnóstico v5: " + errorMsg);
+
+                // Tenta mostrar o erro na tela, mesmo que o statusText original não tenha sido encontrado
+                const body = document.body;
+                const errorDiv = document.createElement('div');
+                errorDiv.style.color = "red";
+                errorDiv.style.fontWeight = "bold";
+                errorDiv.style.marginTop = "20px";
+                errorDiv.style.padding = "10px";
+                errorDiv.style.border = "2px solid red";
+                errorDiv.textContent = errorMsg;
+                if (statusText) { // Se o statusText original existe, usa-o
+                    statusText.textContent = errorMsg;
+                    statusText.style.color = "red";
+                    statusText.style.fontWeight = "bold";
+                } else if (document.getElementById('action-container')) { // Tenta adicionar dentro do container
+                     document.getElementById('action-container').appendChild(errorDiv);
+                } else { // Adiciona ao body como último recurso
+                    body.appendChild(errorDiv);
+                }
             }
+            console.log("Diagnóstico v5: Configuração do script de diagnóstico concluída.");
         });
-
-        if (!startArButton || !modelViewerElement || !statusText || !actionContainer) {
-            console.error("ERRO DE CONFIGURAÇÃO: Elementos HTML essenciais não foram encontrados.");
-            if (statusText) statusText.textContent = "Erro crítico na página.";
-        } else {
-            resetPageToInitialState("Clique no botão para iniciar."); // Garante estado inicial
-
-            startArButton.addEventListener('click', async () => {
-                console.log("Botão 'Carregar Realidade Aumentada' clicado.");
-                statusText.textContent = 'Iniciando e carregando modelo...';
+    </script>
+</body>
+</html>
