@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Forno de Pizza - Realidade Aumentada</title>
+    <title>Forno de Pizza - Realidade Aumentada v4</title>
     <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js"></script>
     <style>
         body {
@@ -18,13 +18,16 @@
             padding: 20px;
             box-sizing: border-box;
             text-align: center;
-            overflow: hidden; /* Evita barras de rolagem se o model-viewer 'invisível' causar algum overflow */
+            overflow: hidden; 
         }
         #action-container {
-            display: flex; /* Será flexível para mostrar/esconder */
+            display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
+            /* z-index para garantir que fique sobre o model-viewer 'escondido' se houver sobreposição */
+            position: relative; 
+            z-index: 10;
         }
         #start-ar-button {
             background-color: #007aff;
@@ -54,15 +57,15 @@
             line-height: 1.4;
         }
         model-viewer#pizza-ar-viewer {
-            /* Começa escondido E é estilizado para ser o mais invisível possível quando 'display:block' */
+            /* Começa escondido */
             display: none; 
-            position: absolute; /* Tira do fluxo normal do layout */
-            width: 1px; /* Tamanho mínimo */
-            height: 1px; /* Tamanho mínimo */
-            opacity: 0; /* Totalmente transparente */
-            z-index: -1; /* Coloca atrás de tudo */
-            pointer-events: none; /* Não reage a cliques/toques */
-            /* Não precisa de borda, background, etc., pois não deve ser visto */
+            /* Quando 'display:block', será posicionado fora da tela */
+            position: absolute; 
+            left: -9999px; /* Move para muito longe à esquerda */
+            top: -9999px;  /* Move para muito longe acima */
+            width: 500px; /* Um tamanho razoável para renderização */
+            height: 500px;
+            /* Não precisa de opacidade 0 ou z-index -1 aqui, pois já está fora da tela */
         }
     </style>
 </head>
@@ -80,7 +83,9 @@
         ar-modes="webxr scene-viewer quick-look"
         ar-placement="floor"
         ar-scale="fixed"
-        autoplay camera-controls shadow-intensity="1"
+        autoplay
+        camera-controls
+        shadow-intensity="1"
         exposure="1.0"
     >
     </model-viewer>
@@ -90,81 +95,33 @@
         const modelViewerElement = document.getElementById('pizza-ar-viewer');
         const statusText = document.getElementById('status-text');
         const actionContainer = document.getElementById('action-container');
+        let arWasSuccessfullyLaunched = false; // Flag para controlar o reset
 
         function resetPageToInitialState(message = "Clique no botão para iniciar novamente.") {
             statusText.textContent = message;
             startArButton.disabled = false;
             startArButton.style.opacity = '1';
-            
-            // Garante que o container do botão e o próprio botão estejam visíveis
             actionContainer.style.display = 'flex'; 
-            startArButton.style.display = 'inline-block'; 
-
-            // Garante que o model-viewer esteja totalmente escondido
-            modelViewerElement.style.display = 'none'; 
+            modelViewerElement.style.display = 'none'; // Garante que o model-viewer seja escondido
             console.log("Página resetada para o estado inicial. Model-viewer escondido.");
+            arWasSuccessfullyLaunched = false; // Reseta a flag
         }
+
+        // Listener para quando a aba/página se torna visível novamente
+        // Isso acontece quando o usuário sai do modo AR nativo
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible' && arWasSuccessfullyLaunched) {
+                console.log("Página tornou-se visível após sessão de AR.");
+                resetPageToInitialState("Sessão de AR encerrada. Clique para iniciar novamente.");
+            }
+        });
 
         if (!startArButton || !modelViewerElement || !statusText || !actionContainer) {
             console.error("ERRO DE CONFIGURAÇÃO: Elementos HTML essenciais não foram encontrados.");
-            if (statusText) {
-                statusText.textContent = "Erro crítico na página. Tente recarregar.";
-            }
+            if (statusText) statusText.textContent = "Erro crítico na página.";
         } else {
-            // Garante que a página comece no estado correto
-            resetPageToInitialState("Clique no botão para iniciar.");
+            resetPageToInitialState("Clique no botão para iniciar."); // Garante estado inicial
 
             startArButton.addEventListener('click', async () => {
                 console.log("Botão 'Carregar Realidade Aumentada' clicado.");
                 statusText.textContent = 'Iniciando e carregando modelo...';
-                startArButton.disabled = true;
-                startArButton.style.opacity = '0.7';
-
-                // Para ativar AR, model-viewer precisa estar no DOM e "ativo".
-                // O CSS já o torna o mais invisível possível (1px, opacity 0, etc.).
-                // 'display:block' é necessário para que ele carregue e funcione.
-                modelViewerElement.style.display = 'block'; 
-                console.log("model-viewer (pizza-ar-viewer) display set to 'block' (mas deve estar funcionalmente invisível).");
-
-                try {
-                    console.log("Verificando se o modelo 3D está carregado...");
-                    if (!modelViewerElement.loaded) {
-                        statusText.textContent = 'Carregando modelo 3D...';
-                        console.log("Modelo não carregado. Aguardando evento 'load'.");
-                        await new Promise((resolve, reject) => {
-                            const loadTimeout = setTimeout(() => reject(new Error('Tempo esgotado (15s) ao carregar o modelo 3D.')), 15000);
-                            modelViewerElement.addEventListener('load', () => { clearTimeout(loadTimeout); resolve(); }, { once: true });
-                            modelViewerElement.addEventListener('error', (event) => { clearTimeout(loadTimeout); reject(new Error(`Erro ao carregar modelo: ${event.detail}`)); }, { once: true });
-                        });
-                        console.log("Modelo 3D carregado.");
-                    } else {
-                        console.log("Modelo 3D já estava carregado.");
-                    }
-                    
-                    statusText.textContent = 'Tentando iniciar Realidade Aumentada...';
-                    console.log("Chamando modelViewer.activateAR().");
-                    
-                    // Ocultar o container do botão ANTES de entrar em AR
-                    // para evitar que ele pisque na tela se o AR demorar um instante para cobrir tudo.
-                    actionContainer.style.display = 'none';
-
-                    await modelViewerElement.activateAR();
-                    console.log("modelViewer.activateAR() chamado com sucesso. Usuário deve estar em AR.");
-                    
-                    // AR foi ativado. A tela está sob controle do visualizador AR nativo.
-                    // Quando o usuário SAIR do AR (clicando no "X" da interface nativa),
-                    // ele voltará para esta página. Queremos que a página já esteja no estado inicial.
-                    // A função resetPageToInitialState é chamada para garantir isso.
-                    // Ela esconde o model-viewer e mostra o botão/texto inicial.
-                    resetPageToInitialState("Sessão de AR encerrada. Clique para iniciar novamente.");
-
-                } catch (error) {
-                    console.error('FALHA AO TENTAR ATIVAR AR:', error);
-                    // Se falhar, garante que o model-viewer seja escondido e reseta o estado para nova tentativa.
-                    resetPageToInitialState(`Falha ao iniciar AR: ${error.message}. Tente novamente.`);
-                }
-            });
-        }
-    </script>
-</body>
-</html>
