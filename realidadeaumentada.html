@@ -3,41 +3,108 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Forno de Pizza - Realidade Aumentada</title>
+    <title>Forno de Pizza - Iniciar Realidade Aumentada</title>
     <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js"></script>
     <style>
-        body { font-family: sans-serif; text-align: center; margin: 0; background-color: #f0f0f0; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; box-sizing: border-box;}
-        h1 { color: #333; margin-bottom: 10px; }
-        p { color: #555; margin-bottom: 20px; max-width: 700px;}
-        model-viewer {
-            width: 90%;
-            max-width: 800px;
-            height: 55vh; /* Altura relativa à tela */
-            border: 1px solid #ccc;
+        body {
+            margin: 0;
+            font-family: sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background-color: #e9ecef; /* Um fundo suave */
+            text-align: center;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        #ar-prompt { /* Estilo para o container do botão */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        #ar-button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 20px 40px;
+            font-size: 20px;
             border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-            background-color: #ffffff;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            transition: background-color 0.3s ease;
+            margin-bottom: 20px; /* Espaço abaixo do botão */
+        }
+        #ar-button:hover {
+            background-color: #0056b3;
+        }
+        model-viewer {
+            width: 300px; /* Tamanho menor para o preview inicial, se desejar */
+            height: 250px;
+            border-radius: 8px;
+            /* Inicialmente pode estar oculto ou ser um pequeno preview */
+            /* display: none; */ /* Descomente se quiser ocultar inicialmente */
+        }
+        .status-message {
+            margin-top: 15px;
+            color: #555;
+            font-size: 14px;
         }
     </style>
 </head>
 <body>
-    <h1>Forno de Pizza (Realidade Aumentada)</h1>
-    <p>Clique no ícone de AR no canto inferior direito do visualizador para posicionar o forno no seu ambiente. A ancoragem no chão é padrão. Se seu dispositivo detectar paredes, você poderá tentar posicioná-lo nelas.</p>
-    
+    <div id="ar-prompt">
+        <button id="ar-button">Iniciar Realidade Aumentada</button>
+        <p class="status-message">Clique no botão para ver o forno de pizza no seu ambiente.</p>
+    </div>
+
     <model-viewer
+        id="pizza-oven-viewer"
         src="pizza oven_resized.glb"
         alt="Modelo 3D de um Forno de Pizza para Realidade Aumentada"
         ar
         ar-modes="webxr scene-viewer quick-look"
-        ar-placement="floor" ar-scale="fixed" camera-controls
-        shadow-intensity="1"
-        autoplay
+        ar-placement="floor"
+        ar-scale="fixed"
+        camera-controls shadow-intensity="1"
         exposure="1.0"
-    >
-        <button slot="ar-button" style="background-color: white; border-radius: 4px; border: none; position: absolute; top: 16px; right: 16px; ">
+        style="display: none;" >
+        <button slot="ar-button" style="background-color: white; border-radius: 4px; border: none; position: absolute; top: 16px; right: 16px; display: none;">
             👋 Ativar AR
         </button>
     </model-viewer>
 
+    <script>
+        const arButton = document.getElementById('ar-button');
+        const modelViewer = document.getElementById('pizza-oven-viewer');
+        const arPromptContainer = document.getElementById('ar-prompt');
+
+        arButton.addEventListener('click', async () => {
+            // Esconde o botão "Iniciar Realidade Aumentada" e o texto de prompt
+            arPromptContainer.style.display = 'none';
+            // Mostra o model-viewer (se estava oculto)
+            modelViewer.style.display = 'block';
+            
+            try {
+                // Espera o modelo carregar completamente (importante!)
+                if (!modelViewer.loaded) {
+                    await new Promise(resolve => modelViewer.addEventListener('load', resolve, { once: true }));
+                }
+                // Tenta ativar o AR
+                await modelViewer.activateAR();
+            } catch (error) {
+                console.error("Falha ao ativar AR automaticamente:", error);
+                // Se falhar (ex: usuário negou permissão, ou navegador bloqueou),
+                // o botão de AR padrão do model-viewer (se visível) ainda pode ser usado.
+                // Poderia mostrar uma mensagem de erro aqui também.
+                const fallbackArButton = modelViewer.querySelector('button[slot="ar-button"]');
+                if(fallbackArButton) fallbackArButton.style.display = 'block'; // Mostra o botão de fallback
+                arPromptContainer.innerHTML = '<p class="status-message">Não foi possível iniciar o AR automaticamente. Tente usar o botão de AR no visualizador, se disponível, ou verifique as permissões da câmera.</p>';
+                arPromptContainer.style.display = 'block'; // Mostra a mensagem de erro
+            }
+        });
+    </script>
 </body>
 </html>
