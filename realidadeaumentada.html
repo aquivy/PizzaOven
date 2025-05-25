@@ -3,80 +3,192 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Forno de Pizza - Diagnóstico v10.3</title>
+    <title>Forno de Pizza - Realidade Aumentada v11</title>
     <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js"></script>
     <style>
-        body { margin: 0; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; background-color: #f0f0f0; padding: 20px; box-sizing: border-box; text-align: center; }
-        #action-container { display: flex; flex-direction: column; align-items: center; width: 100%; border: 2px dotted green; padding: 10px; }
-        #start-ar-button { background-color: #007aff; color: white; border: none; padding: 18px 35px; font-size: 18px; font-weight: 500; border-radius: 10px; cursor: pointer; margin-bottom: 15px; }
-        #status-text { font-size: 15px; color: #333; min-height: 40px; line-height: 1.4; border: 2px solid black; padding: 8px; width: 90%; max-width: 450px; background-color: #fff; border-radius: 5px; }
-        model-viewer#pizza-ar-viewer { display: none; border: 2px dashed red; width: 100px; height: 100px; margin-top: 20px; }
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background-color: #f4f6f8;
+            padding: 20px;
+            box-sizing: border-box;
+            text-align: center;
+            overflow: hidden; 
+        }
+        #action-container {
+            display: none; /* Começa escondido, JS controla visibilidade */
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            position: relative; 
+            z-index: 10;
+        }
+        #start-ar-button {
+            background-color: #007aff;
+            color: white;
+            border: none;
+            padding: 18px 35px;
+            font-size: 18px;
+            font-weight: 500;
+            border-radius: 10px;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+            margin-bottom: 15px;
+        }
+        #start-ar-button:disabled {
+            background-color: #cccccc;
+            cursor: default;
+            opacity: 0.7;
+        }
+        #start-ar-button:active {
+            transform: scale(0.98);
+        }
+        #status-text {
+            font-size: 15px;
+            color: #333;
+            min-height: 40px; 
+            line-height: 1.4;
+            border: 1px dashed #aaa; 
+            padding: 8px;
+            width: 90%;
+            max-width: 450px;
+            background-color: #fff;
+            border-radius: 5px;
+        }
+        model-viewer#pizza-ar-viewer {
+            /* Começa escondido e posicionado fora da tela quando display:block */
+            display: none; 
+            position: absolute; 
+            left: -9999px; 
+            top: -9999px;  
+            width: 500px; 
+            height: 500px;
+        }
     </style>
 </head>
 <body>
     <div id="action-container">
-        <button id="start-ar-button">Testar Botão (v10.3)</button>
-        <p id="status-text">HTML Carregado. Aguardando script JS...</p>
+        <button id="start-ar-button">Carregar Realidade Aumentada</button>
+        <p id="status-text">Aguardando inicialização...</p>
     </div>
-    <model-viewer id="pizza-ar-viewer" src="pizza oven_resized.glb" alt="Forno de Pizza" ar ar-modes="webxr scene-viewer quick-look" style="display: none;"></model-viewer>
+
+    <model-viewer
+        id="pizza-ar-viewer"
+        src="pizza oven_resized.glb"
+        alt="Forno de Pizza em Realidade Aumentada"
+        ar
+        ar-modes="webxr scene-viewer quick-look"
+        ar-placement="floor"
+        ar-scale="fixed"
+        autoplay
+        camera-controls shadow-intensity="1"
+        exposure="1.0"
+    >
+    </model-viewer>
+
     <script>
-        // --- SCRIPT DE DIAGNÓSTICO v10.3 (Adiar Execução) ---
-        console.log("v10.3: Script iniciado (antes de DOMContentLoaded).");
+        console.log("v11: Script iniciado.");
 
-        function runDiagnostics() {
-            console.log("v10.3: runDiagnostics() chamada.");
-            const statusTextElement = document.getElementById('status-text');
-            const startArButtonElement = document.getElementById('start-ar-button');
-            const actionContainerElement = document.getElementById('action-container');
+        function initializeARPage() {
+            console.log("v11: initializeARPage() chamada após delay.");
 
-            if (actionContainerElement) {
-                console.log("v10.3: actionContainerElement encontrado.");
-                actionContainerElement.style.border = "3px solid orange"; // Nova cor para v10.3
-            } else {
-                console.error("v10.3: ERRO GRAVE - actionContainerElement NÃO encontrado!");
-                alert("v10.3: ERRO GRAVE - actionContainerElement não encontrado.");
+            const startArButton = document.getElementById('start-ar-button');
+            const modelViewerElement = document.getElementById('pizza-ar-viewer');
+            const statusText = document.getElementById('status-text');
+            const actionContainer = document.getElementById('action-container');
+            
+            let arWasSuccessfullyLaunched = false;
+
+            function updateStatus(message, isError = false) {
+                if (statusText) {
+                    statusText.textContent = message;
+                    statusText.style.color = isError ? 'red' : '#333';
+                }
+                console.log((isError ? "ERRO v11: " : "STATUS v11: ") + message);
+            }
+
+            function resetPageToInitialState(message = "Clique no botão para iniciar AR (v11).") {
+                updateStatus(message);
+                if (startArButton) {
+                    startArButton.disabled = false;
+                    startArButton.style.opacity = '1';
+                }
+                if (actionContainer) actionContainer.style.display = 'flex'; 
+                if (modelViewerElement) modelViewerElement.style.display = 'none';
+                arWasSuccessfullyLaunched = false;
+                console.log("v11: Página resetada para o estado inicial.");
+            }
+
+            // Listener para quando a aba/página se torna visível novamente
+            document.addEventListener('visibilitychange', () => {
+                if (document.visibilityState === 'visible' && arWasSuccessfullyLaunched) {
+                    console.log("v11: Página tornou-se visível após sessão de AR.");
+                    resetPageToInitialState("Sessão AR encerrada. Clique para iniciar novamente (v11).");
+                }
+            });
+
+            if (!startArButton || !modelViewerElement || !statusText || !actionContainer) {
+                updateStatus("Erro crítico: Elementos HTML não encontrados (v11).", true);
+                if(actionContainer) actionContainer.style.display = 'flex'; // Tenta mostrar o erro
                 return; 
             }
 
-            if (statusTextElement) {
-                statusTextElement.textContent = "v10.3: JS RODANDO APÓS DELAY! DOMContentLoaded OK.";
-                statusTextElement.style.color = "purple";
-                statusTextElement.style.fontWeight = "bold";
-                console.log("v10.3: statusTextElement encontrado e atualizado.");
-            } else {
-                console.error("v10.3: ERRO CRÍTICO - statusTextElement NÃO encontrado!");
-                alert("v10.3: ERRO GRAVE - Elemento de status não encontrado.");
-            }
+            resetPageToInitialState("Clique no botão para iniciar AR (v11)."); // Define estado inicial
 
-            if (startArButtonElement && statusTextElement) { 
-                console.log("v10.3: startArButtonElement encontrado.");
-                startArButtonElement.addEventListener('click', () => {
-                    statusTextElement.textContent = "v10.3: BOTÃO CLICADO!";
-                    statusTextElement.style.color = "green";
-                    statusTextElement.style.fontWeight = "bold";
-                    console.log("v10.3: Botão CLICADO!");
-                    startArButtonElement.disabled = true;
-                    startArButtonElement.textContent = "v10.3: CLICADO";
-                });
-                console.log("v10.3: Listener de clique adicionado ao botão.");
-            } else {
-                if (!startArButtonElement && statusTextElement) {
-                     statusTextElement.textContent = "v10.3: ERRO - Botão principal não encontrado!";
-                     statusTextElement.style.color = "red";
+            startArButton.addEventListener('click', async () => {
+                updateStatus('Botão clicado. Iniciando processo AR (v11)...');
+                startArButton.disabled = true;
+                startArButton.style.opacity = '0.7';
+                arWasSuccessfullyLaunched = false;
+
+                modelViewerElement.style.display = 'block'; // Torna visível (mas fora da tela)
+                console.log("v11: model-viewer display set to 'block' (posicionado fora da tela).");
+
+                try {
+                    console.log("v11: Verificando se o modelo 3D está carregado...");
+                    if (!modelViewerElement.loaded) {
+                        updateStatus('Carregando modelo 3D (v11)...');
+                        console.log("v11: Modelo não carregado. Aguardando evento 'load'.");
+                        await new Promise((resolve, reject) => {
+                            const loadTimeout = setTimeout(() => reject(new Error('Tempo esgotado (15s) ao carregar o modelo 3D (v11).')), 15000);
+                            modelViewerElement.addEventListener('load', () => { clearTimeout(loadTimeout); resolve(); }, { once: true });
+                            modelViewerElement.addEventListener('error', (event) => { clearTimeout(loadTimeout); reject(new Error(`Erro ao carregar modelo (v11): ${event.detail}`)); }, { once: true });
+                        });
+                        console.log("v11: Modelo 3D carregado.");
+                    } else {
+                        console.log("v11: Modelo 3D já estava carregado.");
+                    }
+                    
+                    updateStatus('Modelo carregado. Tentando iniciar Realidade Aumentada (v11)...');
+                    console.log("v11: Chamando modelViewer.activateAR().");
+                    
+                    if (actionContainer) actionContainer.style.display = 'none'; // Esconde botão e status ANTES de entrar em AR
+
+                    await modelViewerElement.activateAR();
+                    console.log("v11: modelViewer.activateAR() chamado com sucesso. Usuário deve estar em AR.");
+                    arWasSuccessfullyLaunched = true; 
+                    // Não reseta aqui; 'visibilitychange' listener fará isso ao sair do AR.
+
+                } catch (error) {
+                    console.error('FALHA AO TENTAR ATIVAR AR (v11):', error);
+                    resetPageToInitialState(`Falha ao iniciar AR (v11): ${error.message}. Tente novamente.`, true);
                 }
-                console.error("v10.3: ERRO - Botão principal (startArButtonElement) não encontrado para adicionar listener.");
-            }
-            
-            console.log("v10.3: Configuração do script de diagnóstico concluída.");
-        }
+            });
+            console.log("v11: Script principal (initializeARPage) configurado.");
+        } // Fim da função initializeARPage
 
         document.addEventListener('DOMContentLoaded', () => {
-            console.log("v10.3: Evento DOMContentLoaded disparado.");
-            // Adiciona um pequeno delay antes de rodar nosso código de diagnóstico
-            // para dar tempo ao model-viewer.js de fazer qualquer inicialização pesada.
-            setTimeout(runDiagnostics, 500); // Espera 500ms (meio segundo)
+            console.log("v11: Evento DOMContentLoaded disparado.");
+            // Adiciona o delay para executar nossa lógica principal
+            setTimeout(initializeARPage, 500); // Espera 500ms
         });
-        console.log("v10.3: Script finalizado (após adicionar listener DOMContentLoaded).");
+        console.log("v11: Script finalizado (após adicionar listener DOMContentLoaded).");
     </script>
 </body>
 </html>
