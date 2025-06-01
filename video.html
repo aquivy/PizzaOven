@@ -3,18 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Forno de Pizza - Visualização 3D Imersiva</title>
+    <title>Forno de Pizza - Visualização 3D</title>
     <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js"></script>
     <style>
         body {
-            margin: 0; /* Remove margens padrão do corpo */
-            overflow: hidden; /* Esconde barras de rolagem se o conteúdo exceder */
-            background-color: #f0f0f0;
+            margin: 0;
+            overflow: hidden;
+            background-color: #ffffff;
         }
         model-viewer {
-            width: 100vw; /* 100% da largura da viewport */
-            height: 100vh; /* 100% da altura da viewport */
-            border: none; /* Remove qualquer borda */
+            width: 100vw;
+            height: 100vh;
+            border: none;
             background-color: #ffffff;
         }
     </style>
@@ -23,10 +23,11 @@
     <model-viewer
         src="pizza oven_resized.glb"
         alt="Modelo 3D de um Forno de Pizza"
-        camera-controls
-        shadow-intensity="1"
         autoplay
+        shadow-intensity="1"
         exposure="1.0"
+        disable-tap
+        interaction-prompt="none"
     >
     </model-viewer>
 </body>
