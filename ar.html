@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Forno de Pizza - Ativação RA Robusta</title>
+  <title>Forno de Pizza - Tentativa RA Otimizada</title>
   <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js"></script>
   <style>
     body {
@@ -34,7 +34,7 @@
       margin-bottom: 10px;
     }
     model-viewer {
-      display: none; /* Inicia oculto, será exibido pelo JS */
+      display: none; /* Inicia oculto */
       width: 100vw;
       height: 100vh;
       border: none;
@@ -44,13 +44,13 @@
 </head>
 <body>
   <button id="start-ar-button">Iniciar Realidade Aumentada</button>
-  <div id="status-text">Aguardando...</div>
+  <div id="status-text">Carregando script...</div>
 
   <model-viewer
     id="pizza-ar-viewer"
     src="pizza oven_resized.glb"
     alt="Forno de Pizza em RA"
-    ar                                   ar-modes="webxr scene-viewer quick-look" ar-placement="floor"
+    ar                                   ar-modes="webxr scene-viewer"        ar-placement="floor"
     ar-scale="auto"                      shadow-intensity="1"
     exposure="1.0"
     interaction-prompt="none"            camera-controls                      disable-tap="false"                  disable-pan="false"                  autoplay                             loading="eager"                      field-of-view="35deg"                >
@@ -61,22 +61,23 @@
     const statusText = document.getElementById('status-text');
     const modelViewer = document.getElementById('pizza-ar-viewer');
 
-    // Estado para controlar o fluxo
-    let isARSessionActive = false;
+    let isARSessionActive = false; // Estado para controlar a sessão AR
 
-    // Função para esperar o carregamento completo do modelo, com feedback e timeout
+    // Esta função verifica e aguarda o modelo carregar e o ambiente AR ficar pronto
     async function ensureModelAndARReady() {
         if (modelViewer.loaded && modelViewer.canActivateAR) {
-            return; // Já está pronto
+            statusText.textContent = "Modelo e ambiente AR prontos.";
+            return;
         }
 
         statusText.textContent = "Verificando compatibilidade e carregando modelo...";
         
-        // Espera o modelo carregar
+        // Espera o evento 'load' do model-viewer, que garante que o GLB foi processado
         await new Promise((resolve, reject) => {
             const timeout = setTimeout(() => reject(new Error("Tempo limite excedido ao carregar modelo 3D.")), 30000); // 30 segundos
             modelViewer.addEventListener('load', () => {
                 clearTimeout(timeout);
+                statusText.textContent = "Modelo 3D carregado. Verificando ambiente AR...";
                 resolve();
             }, { once: true });
             modelViewer.addEventListener('error', (event) => {
@@ -85,57 +86,58 @@
             }, { once: true });
         });
 
-        // Espera a capacidade de ativar AR (model-viewer verifica o ambiente)
-        // Isso é crucial para o timing no Android
+        // Espera a capacidade de ativar AR (model-viewer verifica o ambiente/WebXR APIs)
         await new Promise((resolve, reject) => {
+            let attempts = 0;
+            const maxAttempts = 30; // Tenta por 15 segundos (30 * 500ms)
             const checkARInterval = setInterval(() => {
                 if (modelViewer.canActivateAR) {
                     clearInterval(checkARInterval);
+                    statusText.textContent = "Ambiente AR pronto.";
                     resolve();
                 }
-                statusText.textContent = "Verificando ambiente AR...";
-            }, 500); // Tenta a cada 500ms
-            
-            // Adicionar um timeout para a verificação do AR também
-            setTimeout(() => {
-                if (!modelViewer.canActivateAR) {
+                attempts++;
+                if (attempts >= maxAttempts) {
                     clearInterval(checkARInterval);
-                    reject(new Error("Ambiente AR não pronto após 15 segundos de verificação."));
+                    reject(new Error("Ambiente AR não ficou pronto em tempo."));
                 }
-            }, 15000); // 15 segundos para o AR ficar pronto
+            }, 500); // Tenta a cada 500ms
         });
-        
-        statusText.textContent = "Modelo e ambiente AR prontos.";
     }
 
+    // Listener para o clique no botão de iniciar RA
     startButton.addEventListener('click', async () => {
       if (isARSessionActive) return; // Evita cliques múltiplos
 
       startButton.disabled = true;
-      statusText.textContent = "Preparando Realidade Aumentada...";
+      statusText.textContent = "Iniciando processo AR...";
 
-      // Tornar o model-viewer visível, pois ele precisa renderizar para que `loaded` e `canActivateAR` funcionem
+      // Torna o model-viewer visível para que ele inicie o carregamento e as verificações de AR
       modelViewer.style.display = 'block';
 
       try {
-        await ensureModelAndARReady(); // Chama a nova função robusta
+        await ensureModelAndARReady(); // Garante que tudo está pronto
         statusText.textContent = "Iniciando Realidade Aumentada...";
-        await new Promise(r => setTimeout(r, 1000)); // Pequena pausa
+        await new Promise(r => setTimeout(r, 1000)); // Pequena pausa para UI
 
+        // Tenta ativar a RA
         const startedAR = await modelViewer.activateAR();
+
         if (startedAR) {
           statusText.textContent = "RA ativada! Use gestos de pinça para ajustar o tamanho.";
           isARSessionActive = true;
         } else {
-          statusText.textContent = "Não foi possível iniciar RA. Verifique a compatibilidade do dispositivo ou o ambiente.";
-          console.warn("activateAR() retornou false. Dispositivo ou ambiente pode ser incompatível/inadequado.");
+          // Se activateAR() retornar false (não conseguiu iniciar a sessão)
+          statusText.textContent = "Não foi possível iniciar RA. Verifique a compatibilidade do dispositivo ou do ambiente.";
+          console.warn("activateAR() retornou false. Provável incompatibilidade de hardware ou ARCore.");
           startButton.disabled = false;
           modelViewer.style.display = 'none';
           isARSessionActive = false;
         }
 
       } catch (err) {
-        statusText.textContent = "Erro: " + err.message;
+        // Captura erros durante o carregamento, a espera ou a própria ativação da RA
+        statusText.textContent = "Erro fatal na RA: " + err.message;
         console.error("Erro no fluxo da RA:", err);
         startButton.disabled = false;
         modelViewer.style.display = 'none';
@@ -143,7 +145,7 @@
       }
     });
 
-    // Listeners para feedback e controle de estado
+    // Listeners para feedback e controle de estado da sessão
     modelViewer.addEventListener('ar-session-end', () => {
         statusText.textContent = "Sessão de RA finalizada. Clique para iniciar novamente.";
         startButton.disabled = false;
@@ -151,26 +153,23 @@
         isARSessionActive = false;
     });
 
-    modelViewer.addEventListener('load', () => {
-        // Este é um evento inicial de carregamento, não necessariamente AR-ready
-        if (!startButton.disabled && !isARSessionActive) {
-            statusText.textContent = "Modelo 3D carregado. Aguardando ativação AR...";
-        }
-    });
-
+    // Listener para erros gerais do model-viewer (ex: GLB não encontrado, etc.)
     modelViewer.addEventListener('error', (event) => {
-        statusText.textContent = `Erro ao carregar o modelo: ${event.detail.src || 'Desconhecido'}.`;
+        statusText.textContent = `Erro ao carregar o modelo ou componente: ${event.detail.src || 'Desconhecido'}.`;
         console.error("Model-viewer error:", event.detail);
         startButton.disabled = false;
         modelViewer.style.display = 'none';
         isARSessionActive = false;
     });
 
+    // Listener para quando o rastreamento AR tem dificuldades (útil para feedback ao usuário)
     modelViewer.addEventListener('ar-tracking-limited', (event) => {
         if (event.detail.reason === 'too-few-features') {
             statusText.textContent = "Mova o telefone lentamente para escanear a superfície.";
         }
+        // Outras razões podem ser 'excessive-motion', 'insufficient-features', 'insufficient-light'
     });
+
   </script>
 </body>
 </html>
