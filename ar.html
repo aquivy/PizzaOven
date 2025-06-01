@@ -1,126 +1,97 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Forno de Pizza - Realidade Aumentada</title>
-    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js"></script>
-    <style>
-        body {
-            margin: 0;
-            font-family: sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            background-color: #f4f6f8;
-            padding: 20px;
-            box-sizing: border-box;
-            text-align: center;
-            overflow: hidden;
-        }
-        #action-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            width: 100%;
-            max-width: 480px;
-        }
-        #start-ar-button {
-            background-color: #007aff;
-            color: white;
-            border: none;
-            padding: 18px 35px;
-            font-size: 18px;
-            font-weight: 500;
-            border-radius: 10px;
-            cursor: pointer;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-            margin-bottom: 15px;
-        }
-        #status-text {
-            font-size: 15px;
-            color: #333;
-            min-height: 60px;
-            line-height: 1.5;
-            border: 1px dashed #aaa;
-            padding: 10px;
-            background-color: #fff;
-            border-radius: 5px;
-            text-align: left;
-        }
-        model-viewer#pizza-ar-viewer {
-            display: none;
-            position: fixed;
-            bottom: 5px;
-            right: 5px;
-            width: 50px;
-            height: 50px;
-            z-index: 1;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Forno de Pizza - RA com Zoom</title>
+  <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js"></script>
+  <style>
+    body {
+      margin: 0;
+      background-color: #f0f0f0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      font-family: sans-serif;
+    }
+    #start-ar-button {
+      background-color: #007aff;
+      color: white;
+      padding: 12px 24px;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      margin-bottom: 20px;
+    }
+    #status-text {
+      color: #333;
+      font-size: 14px;
+    }
+    model-viewer {
+      display: none;
+    }
+  </style>
 </head>
 <body>
-    <div id="action-container">
-        <button id="start-ar-button">Carregar Realidade Aumentada</button>
-        <div id="status-text">Clique no botão para iniciar AR.</div>
-    </div>
+  <button id="start-ar-button">Iniciar Realidade Aumentada</button>
+  <div id="status-text">Clique no botão para carregar o modelo.</div>
 
-    <model-viewer
-        id="pizza-ar-viewer"
-        src="pizza oven_resized.glb"
-        alt="Forno de Pizza em Realidade Aumentada"
-        ar
-        ar-modes="webxr scene-viewer quick-look"
-        ar-placement="floor"
-        ar-scale="fixed"
-        autoplay
-        shadow-intensity="1"
-        exposure="1.0"
-        disable-tap
-    >
-    </model-viewer>
+  <model-viewer
+    id="pizza-ar-viewer"
+    src="pizza oven_resized.glb"
+    alt="Forno de Pizza em RA"
+    ar
+    ar-modes="webxr scene-viewer quick-look"
+    ar-placement="floor"
+    ar-scale="fixed"
+    autoplay
+    shadow-intensity="1"
+    exposure="1.0"
+    disable-tap
+    camera-controls
+    disable-pan
+    min-camera-orbit="0deg 90deg auto"
+    max-camera-orbit="0deg 90deg auto"
+    interaction-prompt="none"
+  >
+  </model-viewer>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const startButton = document.getElementById('start-ar-button');
-            const statusText = document.getElementById('status-text');
-            const modelViewer = document.getElementById('pizza-ar-viewer');
+  <script>
+    const startButton = document.getElementById('start-ar-button');
+    const statusText = document.getElementById('status-text');
+    const modelViewer = document.getElementById('pizza-ar-viewer');
 
-            startButton.addEventListener('click', async () => {
-                startButton.disabled = true;
-                statusText.innerHTML = "Carregando modelo 3D...";
+    startButton.addEventListener('click', async () => {
+      startButton.disabled = true;
+      statusText.textContent = "Carregando modelo...";
 
-                modelViewer.style.display = 'block';
+      modelViewer.style.display = 'block';
 
-                if (!modelViewer.loaded) {
-                    await new Promise((resolve, reject) => {
-                        const timeout = setTimeout(() => reject(new Error("Tempo excedido ao carregar modelo")), 15000);
-                        modelViewer.addEventListener('load', () => {
-                            clearTimeout(timeout);
-                            resolve();
-                        }, { once: true });
-                        modelViewer.addEventListener('error', (e) => {
-                            clearTimeout(timeout);
-                            reject(new Error("Erro ao carregar modelo"));
-                        }, { once: true });
-                    });
-                }
-
-                statusText.innerHTML = "Iniciando realidade aumentada...";
-                await new Promise(res => setTimeout(res, 1500));
-
-                try {
-                    await modelViewer.activateAR();
-                    statusText.innerHTML = "AR iniciado.";
-                } catch (err) {
-                    statusText.innerHTML = "Erro ao iniciar AR: " + err.message;
-                    startButton.disabled = false;
-                }
-            });
+      if (!modelViewer.loaded) {
+        await new Promise((resolve, reject) => {
+          const timeout = setTimeout(() => reject(new Error("Timeout ao carregar modelo")), 15000);
+          modelViewer.addEventListener('load', () => {
+            clearTimeout(timeout);
+            resolve();
+          }, { once: true });
         });
-    </script>
+      }
+
+      statusText.textContent = "Iniciando AR...";
+      await new Promise(r => setTimeout(r, 1000));
+
+      try {
+        await modelViewer.activateAR();
+        statusText.textContent = "AR ativado.";
+      } catch (err) {
+        statusText.textContent = "Erro ao iniciar RA: " + err.message;
+        startButton.disabled = false;
+      }
+    });
+  </script>
 </body>
 </html>
