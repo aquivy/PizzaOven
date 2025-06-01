@@ -8,29 +8,19 @@
   <style>
     body {
       margin: 0;
-      /* Removendo flexbox para o body, o model-viewer vai preencher a tela */
-      overflow: hidden; /* Para evitar scroll */
+      overflow: hidden;
       background-color: #f0f0f0;
       font-family: sans-serif;
     }
     model-viewer {
-      /* Tornando o model-viewer visível e preenchendo a tela */
       width: 100vw;
       height: 100vh;
       border: none;
       background-color: #f0f0f0;
     }
-    /* Opcional: Para ocultar o texto de status e o botão customizado,
-       já que vamos usar o botão nativo do model-viewer. */
-    #start-ar-button, #status-text {
-      display: none;
-    }
   </style>
 </head>
 <body>
-  <button id="start-ar-button" style="display: none;">Iniciar Realidade Aumentada</button>
-  <div id="status-text" style="display: none;">Aguardando...</div>
-
   <model-viewer
     id="pizza-ar-viewer"
     src="pizza oven_resized.glb"
@@ -38,21 +28,16 @@
     ar                                   ar-modes="webxr scene-viewer quick-look" ar-placement="floor"
     ar-scale="auto"                      shadow-intensity="1"
     exposure="1.0"
-    interaction-prompt="none"            camera-controls                      disable-tap="false"                  disable-pan="false"                  autoplay                             loading="eager"                      field-of-view="35deg"                /* Opcional: Adicionar um fallback para navegadores sem JS */
-    /* <img src="fallback-image.jpg" alt="Fallback Forno de Pizza"> */
-  >
-  </model-viewer>
+    interaction-prompt="none"            camera-controls                      disable-tap="false"                  disable-pan="false"                  autoplay                             loading="eager"                      field-of-view="35deg"                >
+    </model-viewer>
 
   <script>
-    // Remover a maior parte do JavaScript customizado de ativação
-    // O model-viewer gerencia o carregamento e a ativação da RA com o atributo 'ar'
-
-    // Opcional: Manter listeners para depuração ou feedback avançado, se necessário
     const modelViewer = document.getElementById('pizza-ar-viewer');
 
+    // Eventos para depuração
     modelViewer.addEventListener('error', (event) => {
         console.error("Erro no carregamento ou na RA do model-viewer:", event.detail);
-        alert(`Ocorreu um erro: ${event.detail.src || 'desconhecido'}. Tente novamente ou verifique a compatibilidade do seu dispositivo/ambiente.`);
+        alert(`Ocorreu um erro: ${event.detail.src || 'desconhecido'}. Verifique a compatibilidade do dispositivo/ambiente.`);
     });
 
     modelViewer.addEventListener('ar-session-end', () => {
@@ -62,13 +47,29 @@
     modelViewer.addEventListener('ar-tracking-limited', (event) => {
         if (event.detail.reason === 'too-few-features') {
             console.warn("Rastreamento AR limitado: Mova o telefone para escanear a superfície.");
+            // Você pode adicionar uma mensagem ao usuário aqui se quiser:
+            // alert("Mova seu telefone para escanear a superfície para iniciar a RA.");
         }
     });
 
-    // Se você realmente precisar de um botão customizado para algo mais (ex: um overlay),
-    // você pode reintroduzir o JavaScript, mas o 'modelViewer.activateAR()' seria chamado
-    // apenas após o model-viewer já estar visível e carregado, e com a interface AR pronta.
-    // Para iniciar, é mais seguro deixar o model-viewer gerenciar.
+    // Este evento pode ser útil para ver se o botão AR foi 'ativado' pelo model-viewer
+    modelViewer.addEventListener('ar-status', (event) => {
+        console.log('Status AR:', event.detail.status);
+        if (event.detail.status === 'not-presenting') {
+            console.warn('RA não está sendo apresentada. Verifique se o dispositivo é compatível e se o botão AR está visível e funcionando.');
+        }
+    });
+
+    // Opcional: listener para o clique no botão AR nativo (apenas para debug)
+    const arButton = modelViewer.shadowRoot.querySelector('.ar-button');
+    if (arButton) {
+        arButton.addEventListener('click', () => {
+            console.log("Botão AR nativo clicado!");
+        });
+    } else {
+        console.warn("Botão AR nativo não encontrado no DOM Sombra. Isso pode indicar um problema com o suporte AR.");
+    }
+
   </script>
 </body>
 </html>
