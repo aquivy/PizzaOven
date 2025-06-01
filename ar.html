@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Forno de Pizza - Realidade Aumentada</title>
+  <title>Forno de Pizza - RA em Tamanho Grande</title>
   <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js"></script>
   <style>
     body {
@@ -43,7 +43,7 @@
   <model-viewer
     id="pizza-ar-viewer"
     src="pizza oven_resized.glb"
-    alt="Forno de Pizza em Realidade Aumentada"
+    alt="Forno de Pizza em RA"
     ar
     ar-modes="webxr scene-viewer quick-look"
     ar-placement="floor"
@@ -54,45 +54,4 @@
     disable-tap
     camera-controls
     disable-pan
-    min-camera-orbit="0deg 90deg auto"
-    max-camera-orbit="0deg 90deg auto"
-    interaction-prompt="none"
-    scale="3 3 3"
-  >
-  </model-viewer>
-
-  <script>
-    const startButton = document.getElementById('start-ar-button');
-    const statusText = document.getElementById('status-text');
-    const modelViewer = document.getElementById('pizza-ar-viewer');
-
-    startButton.addEventListener('click', async () => {
-      startButton.disabled = true;
-      statusText.textContent = "Carregando modelo...";
-
-      modelViewer.style.display = 'block';
-
-      if (!modelViewer.loaded) {
-        await new Promise((resolve, reject) => {
-          const timeout = setTimeout(() => reject(new Error("Tempo excedido ao carregar modelo")), 15000);
-          modelViewer.addEventListener('load', () => {
-            clearTimeout(timeout);
-            resolve();
-          }, { once: true });
-        });
-      }
-
-      statusText.textContent = "Iniciando realidade aumentada...";
-      await new Promise(r => setTimeout(r, 1000));
-
-      try {
-        await modelViewer.activateAR();
-        statusText.textContent = "RA ativada.";
-      } catch (err) {
-        statusText.textContent = "Erro ao iniciar RA: " + err.message;
-        startButton.disabled = false;
-      }
-    });
-  </script>
-</body>
-</html>
+    min-camera-orbit="0
