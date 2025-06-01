@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Forno de Pizza - RA Otimizada</title>
+  <title>Forno de Pizza - RA em Tamanho Grande</title>
   <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js"></script>
   <style>
     body {
@@ -15,7 +15,6 @@
       justify-content: center;
       height: 100vh;
       font-family: sans-serif;
-      text-align: center; /* Centraliza o texto no body */
     }
     #start-ar-button {
       background-color: #007aff;
@@ -31,31 +30,34 @@
     #status-text {
       color: #333;
       font-size: 14px;
+      text-align: center;
       margin-bottom: 10px;
     }
     model-viewer {
-      /* Inicialmente oculto para que o botão "Iniciar RA" apareça primeiro */
-      display: none;
-      width: 100vw;
-      height: 100vh;
-      border: none;
-      background-color: #f0f0f0; /* Garante que o fundo do viewer seja claro */
+      /* Este foi o ponto de mudança de display: none para 'block' */
+      display: none; /* Mantemos o display: none aqui para replicar o comportamento original */
     }
   </style>
 </head>
 <body>
   <button id="start-ar-button">Iniciar Realidade Aumentada</button>
-  <div id="status-text">Aguardando...</div>
+  <div id="status-text">Clique no botão para carregar o modelo.</div>
 
   <model-viewer
     id="pizza-ar-viewer"
     src="pizza oven_resized.glb"
     alt="Forno de Pizza em RA"
     ar
-    ar-modes="webxr scene-viewer" ar-placement="floor"
-    ar-scale="auto"               shadow-intensity="1"
+    ar-modes="webxr scene-viewer quick-look" ar-placement="floor"
+    ar-scale="fixed"                      autoplay
+    shadow-intensity="1"
     exposure="1.0"
-    interaction-prompt="none"     camera-controls               disable-tap="false"           disable-pan="false"           autoplay                      loading="eager"               field-of-view="35deg"         >
+    disable-tap                           interaction-prompt="none"
+    camera-controls
+    disable-pan
+    min-camera-orbit="0deg 90deg auto"
+    max-camera-orbit="0deg 90deg auto"
+    scale="6 6 6"                         field-of-view="20deg"                 >
   </model-viewer>
 
   <script>
@@ -63,91 +65,68 @@
     const statusText = document.getElementById('status-text');
     const modelViewer = document.getElementById('pizza-ar-viewer');
 
-    // Função para esperar o carregamento do modelo de forma robusta
-    async function ensureModelLoaded() {
-        if (modelViewer.loaded) {
-            return; // Já está carregado
-        }
-        statusText.textContent = "Carregando modelo 3D...";
-        return new Promise((resolve, reject) => {
-            const timeout = setTimeout(() => {
-                reject(new Error("Tempo limite excedido ao carregar o modelo."));
-            }, 30000); // 30 segundos de timeout
-            modelViewer.addEventListener('load', () => {
-                clearTimeout(timeout);
-                resolve();
-            }, { once: true });
-            modelViewer.addEventListener('error', (event) => {
-                clearTimeout(timeout);
-                reject(new Error(`Erro ao carregar o modelo: ${event.detail.src || 'desconhecido'}`));
-            }, { once: true });
-        });
-    }
-
     startButton.addEventListener('click', async () => {
       startButton.disabled = true;
-      statusText.textContent = "Iniciando processo AR...";
+      statusText.textContent = "Carregando modelo...";
 
-      // Torna o model-viewer visível para que ele comece a carregar o GLB
+      // Tornar o model-viewer visível para que ele comece a carregar o GLB
       modelViewer.style.display = 'block';
 
-      try {
-        await ensureModelLoaded(); // Espera o modelo ser carregado
-        statusText.textContent = "Modelo carregado. Iniciando Realidade Aumentada...";
-        await new Promise(r => setTimeout(r, 800)); // Pequena pausa para a mensagem ser visível
-
-        // Tenta ativar a RA
-        const startedAR = await modelViewer.activateAR();
-
-        if (startedAR) {
-          statusText.textContent = "RA ativada! Use gestos de pinça para ajustar o tamanho.";
-        } else {
-          // Se activateAR() retornar false (não conseguiu iniciar a sessão)
-          statusText.textContent = "Não foi possível iniciar RA. Verifique a compatibilidade do dispositivo ou o ambiente.";
-          console.warn("activateAR() retornou false. Dispositivo ou ambiente pode ser incompatível/inadequado.");
+      if (!modelViewer.loaded) {
+        try {
+          // Espera o evento 'load' do model-viewer, que é mais robusto que model.loaded
+          await new Promise((resolve, reject) => {
+            const timeout = setTimeout(() => reject(new Error("Tempo excedido ao carregar modelo")), 15000);
+            modelViewer.addEventListener('load', () => {
+              clearTimeout(timeout);
+              resolve();
+            }, { once: true });
+            modelViewer.addEventListener('error', (event) => { // Adicionado erro de carregamento
+                clearTimeout(timeout);
+                reject(new Error(`Erro ao carregar o modelo: ${event.detail.src}`));
+            }, { once: true });
+          });
+        } catch (error) {
+          statusText.textContent = "Erro ao carregar modelo: " + error.message;
           startButton.disabled = false;
-          modelViewer.style.display = 'none'; // Esconde o viewer de volta
+          modelViewer.style.display = 'none'; // Esconder em caso de erro
+          return;
         }
+      }
 
+      statusText.textContent = "Iniciando realidade aumentada...";
+      await new Promise(r => setTimeout(r, 1000)); // Pequena pausa
+
+      try {
+        await modelViewer.activateAR();
+        statusText.textContent = "RA ativada.";
       } catch (err) {
-        // Captura erros durante o carregamento ou na própria ativação da RA
-        statusText.textContent = "Erro fatal na RA: " + err.message;
-        console.error("Erro no fluxo da RA:", err);
+        statusText.textContent = "Erro ao iniciar RA: " + err.message;
+        console.error("Erro na ativação da RA:", err);
         startButton.disabled = false;
-        modelViewer.style.display = 'none'; // Esconde o viewer de volta
+        modelViewer.style.display = 'none'; // Esconder em caso de erro
       }
     });
 
-    // Evento disparado quando a sessão de RA é finalizada
+    // Listener para quando a sessão AR é finalizada
     modelViewer.addEventListener('ar-session-end', () => {
         statusText.textContent = "Sessão de RA finalizada. Clique para iniciar novamente.";
         startButton.disabled = false;
-        modelViewer.style.display = 'none'; // Esconde o model-viewer novamente
+        modelViewer.style.display = 'none'; // Esconder model-viewer
     });
 
-    // Evento disparado quando o modelo é completamente carregado (útil para feedback inicial)
+    // Listener para feedback de carregamento inicial (se o modelo carregar antes do clique)
     modelViewer.addEventListener('load', () => {
-        // Se o botão ainda não foi clicado e o modelo já carregou, atualiza o status
         if (!startButton.disabled) {
             statusText.textContent = "Modelo 3D pronto para RA!";
         }
     });
 
-    // Evento disparado se houver um erro no carregamento do modelo (ex: GLB não encontrado)
+    // Listener de erro para o model-viewer em geral
     modelViewer.addEventListener('error', (event) => {
-        statusText.textContent = `Erro ao carregar o modelo: ${event.detail.src || 'Desconhecido'}.`;
-        console.error("Erro no carregamento do model-viewer:", event.detail);
-        startButton.disabled = false;
-        modelViewer.style.display = 'none';
+        statusText.textContent = `Erro geral do modelo: ${event.detail.src || 'desconhecido'}`;
+        console.error("Model-viewer error:", event.detail);
     });
-
-    // Opcional: Feedback quando o ARCore pede para o usuário escanear
-    modelViewer.addEventListener('ar-tracking-limited', (event) => {
-        if (event.detail.reason === 'too-few-features') {
-            statusText.textContent = "Mova o telefone para escanear a superfície.";
-        }
-    });
-
   </script>
 </body>
 </html>
