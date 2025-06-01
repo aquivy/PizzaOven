@@ -3,17 +3,18 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Teste Simples de Carregamento 3D</title>
+  <title>Forno de Pizza - RA Otimizada e Funcional</title>
   <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js"></script>
   <style>
     body {
       margin: 0;
-      overflow: hidden;
+      overflow: hidden; /* Evita barras de rolagem */
       background-color: #f0f0f0;
+      font-family: sans-serif;
     }
     model-viewer {
-      width: 100vw;
-      height: 100vh;
+      width: 100vw;   /* Ocupa a largura total da tela */
+      height: 100vh;  /* Ocupa a altura total da tela */
       border: none;
       background-color: #f0f0f0;
     }
@@ -22,34 +23,44 @@
 <body>
   <model-viewer
     src="pizza oven_resized.glb"
-    alt="Forno de Pizza"
-    autoplay
-    shadow-intensity="1"
-    exposure="1.0"
-    camera-controls
-    ar                              ar-modes="webxr scene-viewer"   ar-scale="auto"                 loading="eager"
-  >
+    alt="Forno de Pizza em Realidade Aumentada"
+    ar                                   ar-modes="webxr scene-viewer quick-look" ar-placement="floor"                 ar-scale="auto"                      shadow-intensity="1"                 exposure="1.0"                       interaction-prompt="none"            camera-controls                      disable-tap="false"                  disable-pan="false"                  autoplay                             loading="eager"                      field-of-view="35deg"                >
   </model-viewer>
 
   <script>
-    // Este script é apenas para depuração mínima se o problema for muito inicial
-    // Ele não faz nada complexo, apenas confirma que o DOM está carregado
-    document.addEventListener('DOMContentLoaded', () => {
-        console.log("DOM carregado.");
-        const mv = document.querySelector('model-viewer');
-        if (mv) {
-            console.log("Elemento model-viewer encontrado.");
-            mv.addEventListener('load', () => {
-                console.log("Modelo 3D carregado com sucesso no model-viewer!");
-            });
-            mv.addEventListener('error', (event) => {
-                console.error("Erro no model-viewer:", event.detail);
-                alert("Erro ao carregar o modelo 3D. Verifique o caminho do arquivo GLB.");
-            });
-        } else {
-            console.error("Elemento model-viewer não encontrado.");
+    const modelViewer = document.querySelector('model-viewer');
+
+    // Eventos para depuração e feedback, caso você queira monitorar o comportamento:
+    modelViewer.addEventListener('load', () => {
+      console.log('Modelo 3D carregado e pronto para exibição.');
+    });
+
+    modelViewer.addEventListener('error', (event) => {
+      console.error('Erro no model-viewer:', event.detail);
+      // Você pode adicionar um alerta aqui se o carregamento falhar, mas o 3D já está funcionando.
+      // alert(`Não foi possível carregar o modelo: ${event.detail.src}.`);
+    });
+
+    modelViewer.addEventListener('ar-session-end', () => {
+      console.log('Sessão de Realidade Aumentada finalizada.');
+    });
+
+    modelViewer.addEventListener('ar-tracking-limited', (event) => {
+      console.warn('Rastreamento AR limitado:', event.detail.reason);
+      if (event.detail.reason === 'too-few-features') {
+        // Isso pode ser útil para dar uma dica ao usuário no futuro:
+        // alert('Mova seu telefone para escanear a superfície e posicionar o objeto.');
+      }
+    });
+
+    // Opcional: Evento que mostra o status da disponibilidade do AR
+    modelViewer.addEventListener('ar-status', (event) => {
+        console.log('Status AR:', event.detail.status);
+        if (event.detail.status === 'not-presenting') {
+            console.warn('RA não está sendo apresentada. Clique no botão AR.');
         }
     });
+
   </script>
 </body>
 </html>
