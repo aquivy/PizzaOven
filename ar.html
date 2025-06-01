@@ -30,15 +30,11 @@
     #status-text {
       color: #333;
       font-size: 14px;
-      text-align: center; /* Centraliza o texto de status */
-      margin-bottom: 10px; /* Adiciona um pequeno espaçamento */
+      text-align: center;
+      margin-bottom: 10px;
     }
     model-viewer {
-      /* Inicialmente oculto, como você já tem */
       display: none;
-      /* Para testes no navegador, se você quiser ver o model-viewer antes da RA */
-      /* width: 100vw; */
-      /* height: 100vh; */
     }
   </style>
 </head>
@@ -53,18 +49,20 @@
     ar
     ar-modes="webxr scene-viewer quick-look"
     ar-placement="floor"
-    ar-scale="fixed" /* Mantenha 'fixed' para respeitar a escala real do GLB */
-    autoplay
+    ar-scale="auto"          autoplay
     shadow-intensity="1"
     exposure="1.0"
-    interaction-prompt="none" /* Para remover o prompt padrão "Toque para interagir" */
-    camera-controls /* Para permitir o controle de câmera na visualização 3D (não afeta AR) */
-    disable-tap /* Desabilita o tap para outras interações na visualização 3D, mas pode impactar o movimento inicial em AR */
-    disable-pan /* Desabilita o movimento horizontal na visualização 3D */
-    min-camera-orbit="auto" /* Pode remover se não for fixar a órbita, 'auto' é o padrão */
-    max-camera-orbit="auto" /* Pode remover se não for fixar a órbita, 'auto' é o padrão */
-    field-of-view="auto" /* Pode remover, 'auto' é o padrão e geralmente melhor */
-    /* REMOVA o atributo 'scale="6 6 6"' pois ele não afeta a AR e pode causar confusão */
+    interaction-prompt="none"
+    camera-controls
+    /* Removendo disable-tap e disable-pan para permitir zoom/movimento após a inserção */
+    /* disable-tap */
+    /* disable-pan */
+    /* Removendo min/max-camera-orbit e field-of-view pois podem limitar a visualização em AR */
+    /* min-camera-orbit="auto" */
+    /* max-camera-orbit="auto" */
+    /* field-of-view="auto" */
+    /* O atributo 'scale' aqui não afetaria a AR, mas se você quiser o dobro do tamanho na visualização WEB, poderia usar: */
+    /* scale="2 2 2" */
   >
   </model-viewer>
 
@@ -77,11 +75,8 @@
       startButton.disabled = true;
       statusText.textContent = "Carregando modelo...";
 
-      // modelViewer.style.display = 'block'; // Não é estritamente necessário se o objetivo é ir direto para RA
-
       if (!modelViewer.loaded) {
         try {
-          // Garante que o modelo esteja carregado antes de tentar ativar a RA
           await modelViewer.model.loaded;
         } catch (error) {
           statusText.textContent = "Erro ao carregar modelo: " + error.message;
@@ -91,12 +86,12 @@
       }
 
       statusText.textContent = "Iniciando realidade aumentada...";
-      await new Promise(r => setTimeout(r, 1000)); // Pequena pausa para a mensagem ser visível
+      await new Promise(r => setTimeout(r, 1000));
 
       try {
         const startedAR = await modelViewer.activateAR();
         if (startedAR) {
-          statusText.textContent = "RA ativada com sucesso!";
+          statusText.textContent = "RA ativada com sucesso! Ajuste a escala manualmente se necessário.";
         } else {
           statusText.textContent = "Não foi possível iniciar RA. Verifique a compatibilidade do dispositivo.";
           startButton.disabled = false;
@@ -108,17 +103,27 @@
       }
     });
 
-    // Opcional: Adicionar um ouvinte para quando o usuário sair da RA
     modelViewer.addEventListener('ar-session-end', () => {
         statusText.textContent = "Sessão de RA finalizada. Clique para iniciar novamente.";
         startButton.disabled = false;
     });
 
-    // Opcional: Adicionar um ouvinte para quando o modelo estiver totalmente carregado
     modelViewer.addEventListener('load', () => {
-        if (!modelViewer.loaded) { // Garante que o modelo não foi carregado via JS antes
+        if (!modelViewer.loaded) {
             statusText.textContent = "Modelo 3D pronto para RA!";
         }
+    });
+
+    // Event listener para quando o modelo é colocado na cena AR (opcional, para feedback)
+    modelViewer.addEventListener('ar-placement', () => {
+        console.log('Modelo colocado na cena AR.');
+        // Aqui você pode tentar manipular a escala, mas é mais complexo em AR nativa
+        // e pode não ter efeito em todas as plataformas com ar-scale="auto"
+        // if (modelViewer.currentAarSession && modelViewer.currentAarSession.session.viewer) {
+        //   // Esta é uma parte avançada e pode não funcionar universalmente
+        //   // ou pode interferir com a escala automática do Quick Look.
+        //   // alert('Tentando aumentar a escala após o placement');
+        // }
     });
 
   </script>
