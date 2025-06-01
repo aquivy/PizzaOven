@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Forno de Pizza - RA em Tamanho Grande</title>
+  <title>Forno de Pizza - RA Otimizada</title>
   <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js"></script>
   <style>
     body {
@@ -35,6 +35,11 @@
     }
     model-viewer {
       display: none;
+      /* Opcional: Se quiser ver o modelo no navegador antes de entrar na RA,
+         descomente e ajuste width/height. Mas para ir direto para RA,
+         'display: none' é bom. */
+      /* width: 100vw; */
+      /* height: 100vh; */
     }
   </style>
 </head>
@@ -47,15 +52,11 @@
     src="pizza oven_resized.glb"
     alt="Forno de Pizza em RA"
     ar
-    ar-modes="webxr scene-viewer quick-look"
-    ar-placement="floor"
-    ar-scale="auto"
-    autoplay
-    shadow-intensity="1"
+    ar-modes="quick-look webxr scene-viewer" ar-placement="floor"
+    ar-scale="auto"                      shadow-intensity="1"
     exposure="1.0"
     interaction-prompt="none"
-    camera-controls
-  >
+    camera-controls                     disable-tap="false"                 disable-pan="false"                 autoplay                            field-of-view="30deg"               loading="eager"                     >
   </model-viewer>
 
   <script>
@@ -63,16 +64,16 @@
     const statusText = document.getElementById('status-text');
     const modelViewer = document.getElementById('pizza-ar-viewer');
 
-    // **NOVA FUNÇÃO PARA GARANTIR QUE O MODELO ESTÁ CARREGADO**
+    // Função para garantir que o modelo esteja carregado antes de ativar a RA
     async function ensureModelLoaded() {
         if (modelViewer.loaded) {
             return; // Já está carregado
         }
-        statusText.textContent = "Carregando modelo...";
+        statusText.textContent = "Carregando modelo 3D...";
         return new Promise((resolve, reject) => {
             const timeout = setTimeout(() => {
                 reject(new Error("Tempo excedido ao carregar o modelo."));
-            }, 20000); // Aumentei o timeout para 20 segundos
+            }, 30000); // Aumentei o timeout para 30 segundos para modelos maiores
             modelViewer.addEventListener('load', () => {
                 clearTimeout(timeout);
                 resolve();
@@ -84,58 +85,59 @@
         });
     }
 
-
     startButton.addEventListener('click', async () => {
       startButton.disabled = true;
-      statusText.textContent = "Preparando...";
+      statusText.textContent = "Preparando Realidade Aumentada...";
 
-      // Exibir o model-viewer, pois é o que vai acionar o carregamento do GLB
+      // Tornar o model-viewer visível para que ele comece a carregar o GLB
       modelViewer.style.display = 'block';
 
       try {
-        await ensureModelLoaded(); // Chama a nova função para esperar o carregamento
-        statusText.textContent = "Modelo carregado. Iniciando realidade aumentada...";
-        await new Promise(r => setTimeout(r, 1000)); // Pequena pausa
+        await ensureModelLoaded(); // Espera o modelo ser carregado
+        statusText.textContent = "Modelo carregado. Iniciando RA...";
+
+        // Pequena pausa para a mensagem ser visível antes de mudar para RA
+        await new Promise(r => setTimeout(r, 1000));
 
         const startedAR = await modelViewer.activateAR();
         if (startedAR) {
-          statusText.textContent = "RA ativada com sucesso! Ajuste a escala manualmente se necessário.";
+          statusText.textContent = "RA ativada! Você pode ajustar o tamanho com gestos de pinça.";
         } else {
           statusText.textContent = "Não foi possível iniciar RA. Verifique a compatibilidade do dispositivo.";
           startButton.disabled = false;
+          // Esconder o model-viewer se a RA não iniciar
+          modelViewer.style.display = 'none';
         }
       } catch (err) {
         statusText.textContent = "Erro: " + err.message;
         console.error("Erro na ativação da RA:", err);
         startButton.disabled = false;
-        modelViewer.style.display = 'none'; // Esconder o model-viewer novamente em caso de erro
+        // Esconder o model-viewer em caso de erro
+        modelViewer.style.display = 'none';
       }
     });
 
+    // Event listener para quando o usuário sai da sessão de RA
     modelViewer.addEventListener('ar-session-end', () => {
         statusText.textContent = "Sessão de RA finalizada. Clique para iniciar novamente.";
         startButton.disabled = false;
         modelViewer.style.display = 'none'; // Esconder o model-viewer ao sair da RA
     });
 
-    // Este listener é mais para feedback inicial, antes mesmo do clique,
-    // caso o navegador pré-carregue o modelo.
+    // Event listener para quando o modelo 3D é carregado (útil para feedback inicial)
     modelViewer.addEventListener('load', () => {
-        // Se o botão não estiver desabilitado (ainda não clicado),
-        // e o modelo já carregou, damos um feedback
-        if (!startButton.disabled) {
+        if (!startButton.disabled) { // Se o botão ainda não foi clicado/desabilitado
             statusText.textContent = "Modelo 3D pronto para RA!";
         }
     });
 
-    // Opcional: Adicionar um ouvinte para o evento de erro de carregamento do model-viewer
+    // Event listener para erros de carregamento
     modelViewer.addEventListener('error', (event) => {
         statusText.textContent = `Erro ao carregar o modelo: ${event.detail.src}`;
         startButton.disabled = false;
         modelViewer.style.display = 'none';
         console.error("Erro de carregamento do model-viewer:", event.detail);
     });
-
   </script>
 </body>
 </html>
