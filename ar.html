@@ -3,145 +3,72 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Forno de Pizza - RA Otimizada</title>
+  <title>Forno de Pizza - RA Mais Estável</title>
   <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js"></script>
   <style>
     body {
       margin: 0;
+      /* Removendo flexbox para o body, o model-viewer vai preencher a tela */
+      overflow: hidden; /* Para evitar scroll */
       background-color: #f0f0f0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
       font-family: sans-serif;
-      text-align: center;
-    }
-    #start-ar-button {
-      background-color: #007aff;
-      color: white;
-      padding: 12px 24px;
-      border: none;
-      border-radius: 8px;
-      font-size: 16px;
-      cursor: pointer;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-      margin-bottom: 20px;
-    }
-    #status-text {
-      color: #333;
-      font-size: 14px;
-      margin-bottom: 10px;
     }
     model-viewer {
-      /* Oculto inicialmente, revelado ao clicar no botão */
-      display: none;
+      /* Tornando o model-viewer visível e preenchendo a tela */
       width: 100vw;
       height: 100vh;
       border: none;
       background-color: #f0f0f0;
     }
+    /* Opcional: Para ocultar o texto de status e o botão customizado,
+       já que vamos usar o botão nativo do model-viewer. */
+    #start-ar-button, #status-text {
+      display: none;
+    }
   </style>
 </head>
 <body>
-  <button id="start-ar-button">Iniciar Realidade Aumentada</button>
-  <div id="status-text">Aguardando...</div>
+  <button id="start-ar-button" style="display: none;">Iniciar Realidade Aumentada</button>
+  <div id="status-text" style="display: none;">Aguardando...</div>
 
   <model-viewer
     id="pizza-ar-viewer"
     src="pizza oven_resized.glb"
     alt="Forno de Pizza em RA"
-    ar
-    ar-modes="webxr scene-viewer quick-look" ar-placement="floor"
-    ar-scale="auto"                       shadow-intensity="1"
+    ar                                   ar-modes="webxr scene-viewer quick-look" ar-placement="floor"
+    ar-scale="auto"                      shadow-intensity="1"
     exposure="1.0"
-    interaction-prompt="none"
-    camera-controls                       disable-tap="false"                   disable-pan="false"                   autoplay                              loading="eager"                       field-of-view="35deg"                 /* Você tinha scale="6 6 6" e min/max-camera-orbit.
-       Esses atributos afetam principalmente a visualização 3D no navegador e
-       podem ser removidos ou ajustados se você só focar na AR.
-       Para AR, ar-scale="auto" e a interação do usuário (pinça) são a chave. */
-    /* stage-light-intensity="2.0" */     >
+    interaction-prompt="none"            camera-controls                      disable-tap="false"                  disable-pan="false"                  autoplay                             loading="eager"                      field-of-view="35deg"                /* Opcional: Adicionar um fallback para navegadores sem JS */
+    /* <img src="fallback-image.jpg" alt="Fallback Forno de Pizza"> */
+  >
   </model-viewer>
 
   <script>
-    const startButton = document.getElementById('start-ar-button');
-    const statusText = document.getElementById('status-text');
+    // Remover a maior parte do JavaScript customizado de ativação
+    // O model-viewer gerencia o carregamento e a ativação da RA com o atributo 'ar'
+
+    // Opcional: Manter listeners para depuração ou feedback avançado, se necessário
     const modelViewer = document.getElementById('pizza-ar-viewer');
 
-    async function ensureModelLoaded() {
-        if (modelViewer.loaded) {
-            return;
-        }
-        statusText.textContent = "Carregando modelo 3D...";
-        return new Promise((resolve, reject) => {
-            const timeout = setTimeout(() => {
-                reject(new Error("Tempo limite excedido ao carregar o modelo."));
-            }, 30000);
-            modelViewer.addEventListener('load', () => {
-                clearTimeout(timeout);
-                resolve();
-            }, { once: true });
-            modelViewer.addEventListener('error', (event) => {
-                clearTimeout(timeout);
-                reject(new Error(`Erro ao carregar o modelo: ${event.detail.src || 'desconhecido'}`));
-            }, { once: true });
-        });
-    }
-
-    startButton.addEventListener('click', async () => {
-      startButton.disabled = true;
-      statusText.textContent = "Iniciando processo AR...";
-
-      modelViewer.style.display = 'block';
-
-      try {
-        await ensureModelLoaded();
-        statusText.textContent = "Modelo carregado. Iniciando Realidade Aumentada...";
-        await new Promise(r => setTimeout(r, 800));
-
-        const startedAR = await modelViewer.activateAR();
-
-        if (startedAR) {
-          statusText.textContent = "RA ativada! Use gestos de pinça para ajustar o tamanho.";
-        } else {
-          statusText.textContent = "Não foi possível iniciar RA. Verifique a compatibilidade do dispositivo ou o ambiente.";
-          console.warn("activateAR() retornou false. Dispositivo ou ambiente pode ser incompatível/inadequado.");
-          startButton.disabled = false;
-          modelViewer.style.display = 'none';
-        }
-
-      } catch (err) {
-        statusText.textContent = "Erro fatal na RA: " + err.message;
-        console.error("Erro no fluxo da RA:", err);
-        startButton.disabled = false;
-        modelViewer.style.display = 'none';
-      }
+    modelViewer.addEventListener('error', (event) => {
+        console.error("Erro no carregamento ou na RA do model-viewer:", event.detail);
+        alert(`Ocorreu um erro: ${event.detail.src || 'desconhecido'}. Tente novamente ou verifique a compatibilidade do seu dispositivo/ambiente.`);
     });
 
     modelViewer.addEventListener('ar-session-end', () => {
-        statusText.textContent = "Sessão de RA finalizada. Clique para iniciar novamente.";
-        startButton.disabled = false;
-        modelViewer.style.display = 'none';
-    });
-
-    modelViewer.addEventListener('load', () => {
-        if (!startButton.disabled) {
-            statusText.textContent = "Modelo 3D pronto para RA!";
-        }
-    });
-
-    modelViewer.addEventListener('error', (event) => {
-        statusText.textContent = `Erro ao carregar o modelo: ${event.detail.src || 'Desconhecido'}.`;
-        console.error("Model-viewer error:", event.detail);
-        startButton.disabled = false;
-        modelViewer.style.display = 'none';
+        console.log("Sessão de RA finalizada.");
     });
 
     modelViewer.addEventListener('ar-tracking-limited', (event) => {
         if (event.detail.reason === 'too-few-features') {
-            statusText.textContent = "Mova o telefone para escanear a superfície.";
+            console.warn("Rastreamento AR limitado: Mova o telefone para escanear a superfície.");
         }
     });
+
+    // Se você realmente precisar de um botão customizado para algo mais (ex: um overlay),
+    // você pode reintroduzir o JavaScript, mas o 'modelViewer.activateAR()' seria chamado
+    // apenas após o model-viewer já estar visível e carregado, e com a interface AR pronta.
+    // Para iniciar, é mais seguro deixar o model-viewer gerenciar.
   </script>
 </body>
 </html>
