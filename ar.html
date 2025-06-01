@@ -30,9 +30,15 @@
     #status-text {
       color: #333;
       font-size: 14px;
+      text-align: center; /* Centraliza o texto de status */
+      margin-bottom: 10px; /* Adiciona um pequeno espaçamento */
     }
     model-viewer {
+      /* Inicialmente oculto, como você já tem */
       display: none;
+      /* Para testes no navegador, se você quiser ver o model-viewer antes da RA */
+      /* width: 100vw; */
+      /* height: 100vh; */
     }
   </style>
 </head>
@@ -47,18 +53,18 @@
     ar
     ar-modes="webxr scene-viewer quick-look"
     ar-placement="floor"
-    ar-scale="fixed"
+    ar-scale="fixed" /* Mantenha 'fixed' para respeitar a escala real do GLB */
     autoplay
     shadow-intensity="1"
     exposure="1.0"
-    disable-tap
-    camera-controls
-    disable-pan
-    min-camera-orbit="0deg 90deg auto"
-    max-camera-orbit="0deg 90deg auto"
-    interaction-prompt="none"
-    scale="6 6 6"
-    field-of-view="20deg"
+    interaction-prompt="none" /* Para remover o prompt padrão "Toque para interagir" */
+    camera-controls /* Para permitir o controle de câmera na visualização 3D (não afeta AR) */
+    disable-tap /* Desabilita o tap para outras interações na visualização 3D, mas pode impactar o movimento inicial em AR */
+    disable-pan /* Desabilita o movimento horizontal na visualização 3D */
+    min-camera-orbit="auto" /* Pode remover se não for fixar a órbita, 'auto' é o padrão */
+    max-camera-orbit="auto" /* Pode remover se não for fixar a órbita, 'auto' é o padrão */
+    field-of-view="auto" /* Pode remover, 'auto' é o padrão e geralmente melhor */
+    /* REMOVA o atributo 'scale="6 6 6"' pois ele não afeta a AR e pode causar confusão */
   >
   </model-viewer>
 
@@ -71,29 +77,50 @@
       startButton.disabled = true;
       statusText.textContent = "Carregando modelo...";
 
-      modelViewer.style.display = 'block';
+      // modelViewer.style.display = 'block'; // Não é estritamente necessário se o objetivo é ir direto para RA
 
       if (!modelViewer.loaded) {
-        await new Promise((resolve, reject) => {
-          const timeout = setTimeout(() => reject(new Error("Tempo excedido ao carregar modelo")), 15000);
-          modelViewer.addEventListener('load', () => {
-            clearTimeout(timeout);
-            resolve();
-          }, { once: true });
-        });
+        try {
+          // Garante que o modelo esteja carregado antes de tentar ativar a RA
+          await modelViewer.model.loaded;
+        } catch (error) {
+          statusText.textContent = "Erro ao carregar modelo: " + error.message;
+          startButton.disabled = false;
+          return;
+        }
       }
 
       statusText.textContent = "Iniciando realidade aumentada...";
-      await new Promise(r => setTimeout(r, 1000));
+      await new Promise(r => setTimeout(r, 1000)); // Pequena pausa para a mensagem ser visível
 
       try {
-        await modelViewer.activateAR();
-        statusText.textContent = "RA ativada.";
+        const startedAR = await modelViewer.activateAR();
+        if (startedAR) {
+          statusText.textContent = "RA ativada com sucesso!";
+        } else {
+          statusText.textContent = "Não foi possível iniciar RA. Verifique a compatibilidade do dispositivo.";
+          startButton.disabled = false;
+        }
       } catch (err) {
         statusText.textContent = "Erro ao iniciar RA: " + err.message;
+        console.error("Erro na ativação da RA:", err);
         startButton.disabled = false;
       }
     });
+
+    // Opcional: Adicionar um ouvinte para quando o usuário sair da RA
+    modelViewer.addEventListener('ar-session-end', () => {
+        statusText.textContent = "Sessão de RA finalizada. Clique para iniciar novamente.";
+        startButton.disabled = false;
+    });
+
+    // Opcional: Adicionar um ouvinte para quando o modelo estiver totalmente carregado
+    modelViewer.addEventListener('load', () => {
+        if (!modelViewer.loaded) { // Garante que o modelo não foi carregado via JS antes
+            statusText.textContent = "Modelo 3D pronto para RA!";
+        }
+    });
+
   </script>
 </body>
 </html>
