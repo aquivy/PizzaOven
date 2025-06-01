@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Forno de Pizza - Visualização 3D</title>
+    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #ffffff;
+        }
+        model-viewer {
+            width: 100vw;
+            height: 100vh;
+            border: none;
+            background-color: #ffffff;
+        }
+    </style>
+</head>
+<body>
+    <model-viewer
+        src="pizza oven_resized.glb"
+        alt="Modelo 3D de um Forno de Pizza"
+        autoplay
+        shadow-intensity="1"
+        exposure="1.0"
+        disable-tap
+        interaction-prompt="none"
+    >
+    </model-viewer>
+</body>
+</html>
