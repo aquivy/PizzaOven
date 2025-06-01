@@ -49,20 +49,12 @@
     ar
     ar-modes="webxr scene-viewer quick-look"
     ar-placement="floor"
-    ar-scale="auto"          autoplay
+    ar-scale="auto"
+    autoplay
     shadow-intensity="1"
     exposure="1.0"
     interaction-prompt="none"
     camera-controls
-    /* Removendo disable-tap e disable-pan para permitir zoom/movimento após a inserção */
-    /* disable-tap */
-    /* disable-pan */
-    /* Removendo min/max-camera-orbit e field-of-view pois podem limitar a visualização em AR */
-    /* min-camera-orbit="auto" */
-    /* max-camera-orbit="auto" */
-    /* field-of-view="auto" */
-    /* O atributo 'scale' aqui não afetaria a AR, mas se você quiser o dobro do tamanho na visualização WEB, poderia usar: */
-    /* scale="2 2 2" */
   >
   </model-viewer>
 
@@ -71,24 +63,40 @@
     const statusText = document.getElementById('status-text');
     const modelViewer = document.getElementById('pizza-ar-viewer');
 
+    // **NOVA FUNÇÃO PARA GARANTIR QUE O MODELO ESTÁ CARREGADO**
+    async function ensureModelLoaded() {
+        if (modelViewer.loaded) {
+            return; // Já está carregado
+        }
+        statusText.textContent = "Carregando modelo...";
+        return new Promise((resolve, reject) => {
+            const timeout = setTimeout(() => {
+                reject(new Error("Tempo excedido ao carregar o modelo."));
+            }, 20000); // Aumentei o timeout para 20 segundos
+            modelViewer.addEventListener('load', () => {
+                clearTimeout(timeout);
+                resolve();
+            }, { once: true });
+            modelViewer.addEventListener('error', (event) => {
+                clearTimeout(timeout);
+                reject(new Error(`Erro ao carregar o modelo: ${event.detail.src}`));
+            }, { once: true });
+        });
+    }
+
+
     startButton.addEventListener('click', async () => {
       startButton.disabled = true;
-      statusText.textContent = "Carregando modelo...";
+      statusText.textContent = "Preparando...";
 
-      if (!modelViewer.loaded) {
-        try {
-          await modelViewer.model.loaded;
-        } catch (error) {
-          statusText.textContent = "Erro ao carregar modelo: " + error.message;
-          startButton.disabled = false;
-          return;
-        }
-      }
-
-      statusText.textContent = "Iniciando realidade aumentada...";
-      await new Promise(r => setTimeout(r, 1000));
+      // Exibir o model-viewer, pois é o que vai acionar o carregamento do GLB
+      modelViewer.style.display = 'block';
 
       try {
+        await ensureModelLoaded(); // Chama a nova função para esperar o carregamento
+        statusText.textContent = "Modelo carregado. Iniciando realidade aumentada...";
+        await new Promise(r => setTimeout(r, 1000)); // Pequena pausa
+
         const startedAR = await modelViewer.activateAR();
         if (startedAR) {
           statusText.textContent = "RA ativada com sucesso! Ajuste a escala manualmente se necessário.";
@@ -97,33 +105,35 @@
           startButton.disabled = false;
         }
       } catch (err) {
-        statusText.textContent = "Erro ao iniciar RA: " + err.message;
+        statusText.textContent = "Erro: " + err.message;
         console.error("Erro na ativação da RA:", err);
         startButton.disabled = false;
+        modelViewer.style.display = 'none'; // Esconder o model-viewer novamente em caso de erro
       }
     });
 
     modelViewer.addEventListener('ar-session-end', () => {
         statusText.textContent = "Sessão de RA finalizada. Clique para iniciar novamente.";
         startButton.disabled = false;
+        modelViewer.style.display = 'none'; // Esconder o model-viewer ao sair da RA
     });
 
+    // Este listener é mais para feedback inicial, antes mesmo do clique,
+    // caso o navegador pré-carregue o modelo.
     modelViewer.addEventListener('load', () => {
-        if (!modelViewer.loaded) {
+        // Se o botão não estiver desabilitado (ainda não clicado),
+        // e o modelo já carregou, damos um feedback
+        if (!startButton.disabled) {
             statusText.textContent = "Modelo 3D pronto para RA!";
         }
     });
 
-    // Event listener para quando o modelo é colocado na cena AR (opcional, para feedback)
-    modelViewer.addEventListener('ar-placement', () => {
-        console.log('Modelo colocado na cena AR.');
-        // Aqui você pode tentar manipular a escala, mas é mais complexo em AR nativa
-        // e pode não ter efeito em todas as plataformas com ar-scale="auto"
-        // if (modelViewer.currentAarSession && modelViewer.currentAarSession.session.viewer) {
-        //   // Esta é uma parte avançada e pode não funcionar universalmente
-        //   // ou pode interferir com a escala automática do Quick Look.
-        //   // alert('Tentando aumentar a escala após o placement');
-        // }
+    // Opcional: Adicionar um ouvinte para o evento de erro de carregamento do model-viewer
+    modelViewer.addEventListener('error', (event) => {
+        statusText.textContent = `Erro ao carregar o modelo: ${event.detail.src}`;
+        startButton.disabled = false;
+        modelViewer.style.display = 'none';
+        console.error("Erro de carregamento do model-viewer:", event.detail);
     });
 
   </script>
