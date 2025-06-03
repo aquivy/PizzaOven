@@ -56,21 +56,21 @@
     #status-text {
       color: #555;
       font-size: 15px;
-      min-height: 60px; 
+      min-height: 70px; /* Aumentado para mais texto e feedback de rastreamento */
       display: flex;
       align-items: center;
       justify-content: center;
       flex-direction: column; 
     }
     model-viewer {
-      display: none; /* Começa escondido, será mostrado ao clicar no botão */
-      width: 100vw; /* Ocupará tela cheia quando visível para AR */
+      display: none; 
+      width: 100vw; 
       height: 100vh;
-      position: fixed; /* Para sobrepor outros elementos */
+      position: fixed; 
       top: 0;
       left: 0;
-      z-index: 1000; /* Para ficar na frente */
-      background-color: #f0f0f0; /* Cor de fundo enquanto carrega */
+      z-index: 1000; 
+      background-color: #f0f0f0; 
     }
   </style>
 </head>
@@ -79,13 +79,15 @@
     <h1>Forno de Pizza em Realidade Aumentada</h1>
     <button id="start-ar-button">Iniciar Realidade Aumentada</button>
     <div id="status-text">Verificando compatibilidade...</div>
-    <p style="font-size: 12px; color: #777;">Certifique-se de que seu ambiente está bem iluminado e aponte para uma superfície plana.</p>
+    <p style="font-size: 12px; color: #777; max-width: 300px;">
+      Para melhor resultado: use em ambiente bem iluminado e aponte para uma superfície com texturas ou detalhes visuais (evite superfícies muito lisas ou reflexivas).
+    </p>
   </div>
 
   <model-viewer
     id="pizza-ar-viewer"
     src="https://raw.githubusercontent.com/julianambatista/PizzaOven/main/pizza%20oven_resized.glb"
-    poster="https://placehold.co/600x400/FF6347/FFFFFF?text=Forno+de+Pizza\nCarregando..." /* Imagem de placeholder */
+    poster="https://placehold.co/600x400/FF6347/FFFFFF?text=Forno+de+Pizza\nCarregando..."
     alt="Forno de Pizza em RA"
     ar
     ar-modes="webxr scene-viewer quick-look"
@@ -102,11 +104,10 @@
     interaction-prompt="auto" 
     scale="12 12 12"
     field-of-view="30deg"
-    autoplay /* Tenta tocar a animação padrão automaticamente */
-    /* Se o seu modelo tiver uma animação específica, descomente e substitua [NomeDaAnimacao] abaixo: */
-    /* animation-name="[NomeDaAnimacao]" */ 
+    autoplay 
   >
-    <div slot="ar-button" style="display: none;"></div> </model-viewer>
+    <div slot="ar-button" style="display: none;"></div>
+  </model-viewer>
 
   <script>
     const startButton = document.getElementById('start-ar-button');
@@ -114,6 +115,7 @@
     const modelViewer = document.getElementById('pizza-ar-viewer');
     let modelLoaded = false;
     let arActivationAttempted = false;
+    let currentSession = null; // Para guardar a sessão AR ativa
 
     console.log("Script iniciado. Modelo SRC:", modelViewer.src);
 
@@ -154,15 +156,12 @@
               modelLoaded = true;
               console.log("Modelo carregado com sucesso:", modelViewer.src);
               
-              // Lista as animações disponíveis no console
               if (modelViewer.availableAnimations && modelViewer.availableAnimations.length > 0) {
                 console.log("Animações disponíveis no modelo:", modelViewer.availableAnimations);
-                statusText.textContent = "Modelo carregado! Animações disponíveis: " + modelViewer.availableAnimations.join(', ') + ". Iniciando RA...";
-                // Se houver animações e 'autoplay' estiver ativo, ela deve começar.
-                // Se precisar de uma específica, use o atributo 'animation-name'.
+                statusText.textContent = "Modelo carregado! Animações: " + modelViewer.availableAnimations.join(', ') + ". Iniciando RA...";
               } else {
                 console.log("Nenhuma animação encontrada no modelo.");
-                statusText.textContent = "Modelo carregado! (Nenhuma animação encontrada). Iniciando RA...";
+                statusText.textContent = "Modelo carregado! (Nenhuma animação). Iniciando RA...";
               }
               resolve();
             };
@@ -187,7 +186,7 @@
            statusText.textContent = "Modelo já carregado. Iniciando Realidade Aumentada...";
         }
 
-        await new Promise(r => setTimeout(r, 1500)); // Aumentado um pouco o delay para ler o status da animação
+        await new Promise(r => setTimeout(r, 1500)); 
         
         console.log("Tentando ativar AR (modelViewer.activateAR())...");
         if (!modelViewer.canActivateAR) {
@@ -212,8 +211,10 @@
     startButton.addEventListener('click', loadAndActivateAR);
 
     modelViewer.addEventListener('ar-status', (event) => {
-        console.log('AR Status Event:', event.detail.status);
+        console.log('AR Status Event:', event.detail.status, event.detail.session);
         const arControls = document.getElementById('ar-controls');
+        currentSession = event.detail.session; // Guarda a sessão atual
+
         switch(event.detail.status) {
             case 'not-presenting':
                 statusText.textContent = "RA finalizada. Clique para iniciar novamente.";
@@ -221,9 +222,10 @@
                 modelViewer.style.display = 'none'; 
                 if (arControls) arControls.style.display = 'flex';
                 arActivationAttempted = false;
+                currentSession = null;
                 break;
             case 'session-started':
-                statusText.textContent = "RA ativa! Mova seu dispositivo para encontrar uma superfície. Toque no objeto para reposicionar se necessário.";
+                statusText.innerHTML = "RA ativa! Mova seu dispositivo para encontrar uma superfície.<br>Toque no objeto para reposicionar se necessário.";
                 if (arControls) arControls.style.display = 'none'; 
                 break;
             case 'failed':
@@ -232,6 +234,7 @@
                 modelViewer.style.display = 'none'; 
                 if (arControls) arControls.style.display = 'flex';
                 arActivationAttempted = false;
+                currentSession = null;
                 break;
             case 'consent-needed': 
                  statusText.textContent = "Permissão necessária para RA.";
@@ -240,8 +243,33 @@
         }
     });
 
+    // Evento para monitorar o estado do rastreamento AR
+    modelViewer.addEventListener('ar-tracking', (event) => {
+        // Só atualiza o status se a RA estiver ativa e não estivermos já mostrando uma mensagem de erro mais crítica
+        if (arActivationAttempted && currentSession && !statusText.innerHTML.toLowerCase().includes('erro') && !statusText.innerHTML.toLowerCase().includes('falha')) {
+            switch(event.detail.state) {
+                case 'tracking':
+                    // console.log("Rastreamento AR estável.");
+                    // Poderia limpar mensagens de "procurando superfície", mas pode ser verboso.
+                    // Se a mensagem anterior era sobre "procurando", atualiza.
+                    if (statusText.innerHTML.includes("Procurando") || statusText.innerHTML.includes("instável")) {
+                        statusText.innerHTML = "RA ativa! Superfície detectada.<br>Toque no objeto para reposicionar.";
+                    }
+                    break;
+                case 'not-tracking':
+                    console.warn("Perda de rastreamento AR ou procurando superfície.");
+                    statusText.innerHTML = "Procurando superfície ou rastreamento instável...<br>Mantenha o dispositivo firme e em ambiente bem iluminado.";
+                    break;
+                default:
+                    // console.log("Estado de rastreamento AR:", event.detail.state);
+                    break;
+            }
+        }
+    });
+
     modelViewer.addEventListener('progress', (event) => {
-        if (!arActivationAttempted && !modelLoaded && modelViewer.style.display === 'block') { 
+        // Mostra o progresso apenas durante a fase de carregamento inicial do modelo
+        if (!modelLoaded && arActivationAttempted && modelViewer.style.display === 'block') { 
             const percentage = Math.floor(event.detail.totalProgress * 100);
             statusText.innerHTML = `Carregando modelo (7.2MB): ${percentage}%<br>Por favor, aguarde...`;
         }
