@@ -77,7 +77,7 @@
 
   <model-viewer
     id="pizza-ar-viewer"
-    src="pizza oven_resized.glb" /* Certifique-se que este arquivo GLB está acessível */
+    src="pizza oven_resized.glb" /* IMPORTANTE: Certifique-se que este arquivo GLB está acessível e o caminho está correto! */
     alt="Forno de Pizza em RA"
     ar
     ar-modes="webxr scene-viewer quick-look"
@@ -105,75 +105,89 @@
     const modelViewer = document.getElementById('pizza-ar-viewer');
     let modelLoaded = false;
 
+    console.log("Tentando carregar modelo de:", modelViewer.src); // Log para verificar o caminho do modelo
+
     // Pré-carregar o modelo discretamente
-    // Isso pode ajudar a reduzir o tempo de espera quando o usuário clica no botão
     const preloadModel = async () => {
+      // Se o modelo já foi carregado (por exemplo, por uma tentativa anterior ou cache)
       if (modelViewer.loaded) {
         modelLoaded = true;
+        console.log("Modelo já estava carregado (modelViewer.loaded era true).");
+        statusText.textContent = "Modelo pronto. Clique para iniciar RA.";
+        startButton.disabled = false;
         return;
       }
+
       try {
         // Exibe o model-viewer minimizado para permitir o carregamento
-        modelViewer.style.display = 'block'; 
+        modelViewer.style.display = 'block';
         modelViewer.style.width = '1px';
         modelViewer.style.height = '1px';
         modelViewer.style.position = 'fixed'; // Garante que não afete o layout
         modelViewer.style.left = '-9999px'; // Fora da tela
 
-        await modelViewer.updateComplete; // Espera o model-viewer estar pronto
+        // Espera o model-viewer estar pronto para interações, não necessariamente o modelo carregado
+        await modelViewer.updateComplete;
         
-        // O evento 'load' pode não ser confiável para modelos já cacheados.
-        // 'model-visibility' com 'visible' é uma alternativa,
-        // mas como estamos forçando o carregamento, vamos aguardar um pouco.
-        // Se o modelo já estiver carregado (por exemplo, cache), o 'loaded' será true.
+        // Verifica novamente se o modelo carregou após updateComplete (pode ser rápido do cache)
         if (modelViewer.loaded) {
             modelLoaded = true;
-            console.log("Modelo pré-carregado (possivelmente do cache).");
+            console.log("Modelo pré-carregado rapidamente (possivelmente do cache).");
             statusText.textContent = "Modelo pronto. Clique para iniciar RA.";
-            startButton.disabled = false; // Habilita o botão se estava desabilitado
+            startButton.disabled = false;
             return;
         }
 
-        // Adiciona um listener para o evento 'load'
+        // Adiciona listeners para os eventos 'load' e 'error'
         await new Promise((resolve, reject) => {
-          const timeout = setTimeout(() => {
-            console.error("Tempo excedido ao pré-carregar modelo.");
-            reject(new Error("Tempo excedido ao pré-carregar modelo"));
-          }, 20000); // Timeout de 20 segundos para pré-carregamento
+          const PRELOAD_TIMEOUT_MS = 30000; // Aumentado o timeout para 30 segundos
+          let timeoutId = setTimeout(() => {
+            console.error(`Tempo de ${PRELOAD_TIMEOUT_MS / 1000}s excedido ao pré-carregar modelo.`);
+            reject(new Error(`Tempo excedido (${PRELOAD_TIMEOUT_MS / 1000}s) ao pré-carregar modelo. Verifique o arquivo e a conexão.`));
+          }, PRELOAD_TIMEOUT_MS);
 
-          modelViewer.addEventListener('load', () => {
-            clearTimeout(timeout);
+          const loadListener = () => {
+            clearTimeout(timeoutId);
             modelLoaded = true;
-            console.log("Modelo pré-carregado com sucesso.");
+            console.log("Modelo pré-carregado com sucesso via evento 'load'.");
             statusText.textContent = "Modelo pronto. Clique para iniciar RA.";
-            startButton.disabled = false; // Habilita o botão
+            startButton.disabled = false;
             resolve();
-          }, { once: true });
+          };
 
-          modelViewer.addEventListener('error', (event) => {
-            clearTimeout(timeout);
-            console.error("Erro ao pré-carregar o modelo:", event.detail);
-            statusText.textContent = "Erro ao carregar modelo. Verifique o console.";
-            reject(new Error("Erro no pré-carregamento do modelo"));
-          }, { once: true });
+          const errorListener = (event) => {
+            clearTimeout(timeoutId);
+            console.error("Erro explícito ao pré-carregar o modelo:", event.detail);
+            statusText.textContent = "Erro ao carregar modelo. Verifique o console e o arquivo.";
+            startButton.disabled = false; // Permite nova tentativa
+            reject(new Error("Erro no pré-carregamento do modelo: " + (event.detail?.sourceError?.message || event.detail || "Erro desconhecido")));
+          };
+          
+          modelViewer.addEventListener('load', loadListener, { once: true });
+          modelViewer.addEventListener('error', errorListener, { once: true });
         });
 
       } catch (error) {
-        console.error("Falha ao tentar pré-carregar o modelo:", error);
-        statusText.textContent = "Falha ao preparar modelo. Tente novamente.";
-        // Não desabilitar o botão aqui, pois o usuário ainda pode tentar
+        console.error("Falha na função preloadModel:", error);
+        statusText.textContent = `Falha ao preparar modelo: ${error.message}. Tente novamente.`;
+        startButton.disabled = false; // Garante que o botão seja reabilitado em caso de erro no try/catch
       } finally {
         // Esconde o model-viewer novamente se ele foi usado para pré-carregar e não está em AR
-        if (modelViewer.style.position === 'fixed') {
+        // e se o modelo não carregou com sucesso (para não esconder se já estiver pronto)
+        if (modelViewer.style.position === 'fixed' && !modelLoaded) {
             modelViewer.style.display = 'none';
             modelViewer.style.position = 'absolute'; // Volta ao original
+        } else if (modelViewer.style.position === 'fixed' && modelLoaded) {
+            // Se carregou, pode manter escondido até o clique do botão de AR
+             modelViewer.style.display = 'none';
+             modelViewer.style.position = 'absolute';
         }
       }
     };
 
     // Inicia o pré-carregamento assim que o script for executado
-    startButton.disabled = true; // Desabilita o botão até o modelo estar pronto
-    statusText.textContent = "Preparando modelo...";
+    startButton.disabled = true;
+    statusText.textContent = "Preparando modelo, por favor aguarde...";
     preloadModel();
 
 
@@ -183,89 +197,98 @@
 
       // Garante que o model-viewer esteja visível para ativar AR
       modelViewer.style.display = 'block';
-      modelViewer.style.width = '100%'; // Ocupa espaço se necessário, mas AR é fullscreen
+      modelViewer.style.width = '100%';
       modelViewer.style.height = '100%';
-      modelViewer.style.position = 'absolute'; // Para sobrepor
+      modelViewer.style.position = 'fixed'; // Usa fixed para sobrepor tudo
       modelViewer.style.left = '0';
       modelViewer.style.top = '0';
-      modelViewer.style.zIndex = '1000'; // Para ficar na frente
+      modelViewer.style.zIndex = '1000';
 
 
       if (!modelLoaded) {
-        statusText.textContent = "Aguardando carregamento do modelo...";
+        statusText.textContent = "Aguardando carregamento final do modelo...";
         try {
-          await new Promise((resolve, reject) => {
-            if (modelViewer.loaded) {
+          // Se o preload não completou ou falhou, tentamos carregar aqui novamente
+          // ou esperamos o modelViewer.loaded se tornar true.
+          if (!modelViewer.loaded) {
+            await new Promise((resolve, reject) => {
+              const finalLoadTimeout = setTimeout(() => reject(new Error("Tempo excedido ao carregar modelo para AR")), 15000);
+              modelViewer.addEventListener('load', () => {
+                clearTimeout(finalLoadTimeout);
+                modelLoaded = true; // Confirma que está carregado
                 resolve();
-                return;
-            }
-            const timeout = setTimeout(() => reject(new Error("Tempo excedido ao carregar modelo para AR")), 15000);
-            modelViewer.addEventListener('load', () => {
-              clearTimeout(timeout);
-              modelLoaded = true;
-              resolve();
-            }, { once: true });
-            modelViewer.addEventListener('error', (event) => {
-              clearTimeout(timeout);
-              reject(new Error("Erro ao carregar modelo para AR: " + event.detail));
-            }, { once: true });
-          });
-          console.log("Modelo carregado para AR.");
+              }, { once: true });
+              modelViewer.addEventListener('error', (event) => {
+                clearTimeout(finalLoadTimeout);
+                reject(new Error("Erro ao carregar modelo para AR: " + (event.detail?.sourceError?.message || event.detail)));
+              }, { once: true });
+            });
+          } else {
+            modelLoaded = true; // Já estava carregado
+          }
+          console.log("Modelo carregado e pronto para AR.");
         } catch (err) {
           console.error("Erro durante o carregamento para AR:", err);
           statusText.textContent = "Erro ao carregar modelo: " + err.message;
           startButton.disabled = false;
-          // Esconde o model-viewer se falhar
-          modelViewer.style.display = 'none';
+          modelViewer.style.display = 'none'; // Esconde se falhar
+          modelViewer.style.position = 'absolute'; // Volta ao original
           return;
         }
       }
 
       statusText.textContent = "Iniciando Realidade Aumentada...";
-      // Pequeno delay para o usuário ler a mensagem
-      await new Promise(r => setTimeout(r, 500));
+      await new Promise(r => setTimeout(r, 500)); // Pequeno delay para o usuário ler a mensagem
 
       try {
         console.log("Tentando ativar AR...");
         await modelViewer.activateAR();
         console.log("AR ativado ou tentativa de ativação em progresso.");
-        // O status text pode ser atualizado pelo próprio model-viewer ou pelo sistema de RA
-        // statusText.textContent = "RA Ativada. Procure uma superfície.";
-        // O botão pode ser re-habilitado ou a interface pode mudar dependendo do fluxo de RA
+        // O status text é atualizado pelos eventos ar-status
       } catch (err) {
         console.error("Erro ao iniciar RA:", err);
-        statusText.textContent = "Erro ao iniciar RA: " + err.message + ". Verifique se seu dispositivo suporta RA.";
+        statusText.textContent = "Erro ao iniciar RA: " + err.message + ". Verifique se seu dispositivo suporta RA e concedeu permissões.";
         startButton.disabled = false;
-        // Esconde o model-viewer se falhar
-        modelViewer.style.display = 'none';
+        modelViewer.style.display = 'none'; // Esconde se falhar
+        modelViewer.style.position = 'absolute'; // Volta ao original
       }
     });
 
-    // Opcional: Lidar com a saída do modo AR
+    // Lidar com os status da sessão de RA
     modelViewer.addEventListener('ar-status', (event) => {
-        if (event.detail.status === 'not-presenting') {
-            console.log("Saiu do modo AR.");
-            statusText.textContent = "RA finalizada. Clique para iniciar novamente.";
-            startButton.disabled = false;
-            modelViewer.style.display = 'none'; // Esconde o model-viewer ao sair da RA
-        } else if (event.detail.status === 'session-started') {
-            console.log("Sessão AR iniciada.");
-            statusText.textContent = "RA ativa. Mova seu dispositivo.";
-            document.getElementById('ar-controls').style.display = 'none'; // Esconde os controles
-        } else if (event.detail.status === 'failed') {
-            console.log("Falha na sessão AR.");
-            statusText.textContent = "Falha ao iniciar a sessão de RA.";
-            startButton.disabled = false;
-            modelViewer.style.display = 'none';
+        console.log('AR Status Event:', event.detail.status);
+        const arControls = document.getElementById('ar-controls');
+        switch(event.detail.status) {
+            case 'not-presenting':
+                statusText.textContent = "RA finalizada. Clique para iniciar novamente.";
+                startButton.disabled = false;
+                modelViewer.style.display = 'none';
+                modelViewer.style.position = 'absolute';
+                if (arControls) arControls.style.display = 'flex'; // Mostra os controles novamente
+                break;
+            case 'session-started':
+                statusText.textContent = "RA ativa. Mova seu dispositivo para encontrar uma superfície.";
+                if (arControls) arControls.style.display = 'none'; // Esconde os controles
+                break;
+            case 'failed':
+                statusText.textContent = "Falha ao iniciar a sessão de RA. Verifique as permissões e o suporte do dispositivo.";
+                startButton.disabled = false;
+                modelViewer.style.display = 'none';
+                modelViewer.style.position = 'absolute';
+                if (arControls) arControls.style.display = 'flex';
+                break;
+            case 'consent-needed': // Pode ser útil para alguns fluxos
+                 statusText.textContent = "Permissão necessária para RA.";
+                 break;
         }
     });
 
     modelViewer.addEventListener('ar-tracking', (event) => {
+        // console.log('AR Tracking Event:', event.detail.state);
         if (event.detail.state === 'tracking') {
-            // console.log("Rastreamento AR estável.");
+            // statusText.textContent = "Superfície detectada, posicionando..."; // Pode ser muito verboso
         } else if (event.detail.state === 'not-tracking') {
-            // console.warn("Perda de rastreamento AR.");
-            // statusText.textContent = "Perda de rastreamento. Tente mover o dispositivo.";
+            // statusText.textContent = "Procurando superfície... Mantenha o dispositivo firme.";
         }
     });
 
