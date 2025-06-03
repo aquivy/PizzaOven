@@ -56,10 +56,11 @@
     #status-text {
       color: #555;
       font-size: 15px;
-      min-height: 44px; 
+      min-height: 60px; /* Aumentado para mais texto */
       display: flex;
       align-items: center;
       justify-content: center;
+      flex-direction: column; /* Para empilhar mensagens */
     }
     model-viewer {
       display: none;
@@ -84,7 +85,7 @@
     src="https://raw.githubusercontent.com/julianambatista/PizzaOven/main/pizza%20oven_resized.glb" /* URL do seu modelo no GitHub */
     alt="Forno de Pizza em RA"
     ar
-    ar-modes="webxr scene-viewer quick-look"
+    ar-modes="webxr scene-viewer quick-look" /* Fallbacks para Android e iOS */
     ar-placement="floor"
     ar-scale="fixed"
     ar-stability="medium"
@@ -111,14 +112,27 @@
     let preloadAttempted = false;
 
     console.log("Script iniciado. Tentando carregar modelo de:", modelViewer.src);
+    statusText.innerHTML = "Verificando suporte a WebXR...";
+
+    if (!navigator.xr) {
+        console.warn("WebXR não é suportado neste navegador/dispositivo.");
+        statusText.innerHTML = "Realidade Aumentada (WebXR) não é suportada neste navegador ou dispositivo.<br>Alguns modos alternativos podem funcionar.";
+        // Não desabilitar o botão, pois scene-viewer/quick-look podem funcionar
+    } else {
+        console.log("WebXR é suportado.");
+        statusText.innerHTML = "WebXR suportado. Clique no botão para carregar o modelo.";
+    }
+
 
     const preloadModel = async () => {
       preloadAttempted = true;
       console.log("preloadModel chamado. modelViewer.loaded:", modelViewer.loaded);
+      statusText.innerHTML = "Iniciando carregamento do modelo (aprox 7.2MB)...<br>Isso pode levar um momento, por favor aguarde.";
+
 
       if (modelViewer.loaded) {
         modelLoaded = true;
-        console.log("Modelo já estava carregado (modelViewer.loaded era true no início do preloadModel).");
+        console.log("Modelo já estava carregado.");
         statusText.textContent = "Modelo pronto. Clique para iniciar RA.";
         startButton.disabled = false;
         return;
@@ -145,8 +159,8 @@
         await new Promise((resolve, reject) => {
           const PRELOAD_TIMEOUT_MS = 60000; // 60 segundos de timeout
           let timeoutId = setTimeout(() => {
-            const errorMsg = `Tempo de ${PRELOAD_TIMEOUT_MS / 1000}s excedido ao pré-carregar modelo: ${modelViewer.src}. Verifique a URL e sua conexão.`;
-            console.error(errorMsg);
+            const errorMsg = `Tempo de ${PRELOAD_TIMEOUT_MS / 1000}s excedido ao pré-carregar modelo: ${modelViewer.src}.<br>Verifique sua conexão ou tente novamente. O arquivo é grande (7.2MB).`;
+            console.error(errorMsg.replace('<br>', ' '));
             reject(new Error(errorMsg));
           }, PRELOAD_TIMEOUT_MS);
 
@@ -154,7 +168,7 @@
             clearTimeout(timeoutId);
             modelLoaded = true;
             console.log("Modelo pré-carregado com sucesso via evento 'load':", modelViewer.src);
-            statusText.textContent = "Modelo pronto. Clique para iniciar RA.";
+            statusText.textContent = "Modelo pronto! Clique para iniciar RA.";
             startButton.disabled = false;
             resolve();
           };
@@ -163,7 +177,7 @@
             clearTimeout(timeoutId);
             const errorDetail = event.detail?.sourceError?.message || event.detail?.message || event.detail || "Erro desconhecido";
             console.error(`Erro explícito ao pré-carregar o modelo (${modelViewer.src}):`, errorDetail, event.detail);
-            statusText.innerHTML = `Erro ao carregar modelo (${modelViewer.src.substring(modelViewer.src.lastIndexOf('/')+1)}).<br>Verifique o console e a conexão.`;
+            statusText.innerHTML = `Erro ao carregar modelo (${modelViewer.src.substring(modelViewer.src.lastIndexOf('/')+1)}).<br>Detalhe: ${errorDetail}.<br>Verifique o console e a conexão.`;
             startButton.disabled = false; 
             reject(new Error(`Erro no pré-carregamento do modelo: ${errorDetail}`));
           };
@@ -174,7 +188,7 @@
 
       } catch (error) {
         console.error("Falha na função preloadModel:", error.message);
-        statusText.innerHTML = `Falha ao preparar modelo: ${error.message}<br>Tente recarregar ou verifique a conexão.`;
+        statusText.innerHTML = `Falha ao preparar modelo: ${error.message.replace(/\n/g, '<br>')}`;
         startButton.disabled = false;
       } finally {
         if (modelLoaded) {
@@ -187,9 +201,17 @@
       }
     };
 
-    startButton.disabled = true;
-    statusText.innerHTML = "Preparando modelo, por favor aguarde...<br>(Isso pode levar até um minuto)";
-    preloadModel();
+    startButton.disabled = true; // Será habilitado após verificação do WebXR e/ou preload
+    // A mensagem inicial de status já é definida após a verificação do WebXR.
+    // Se WebXR for suportado, o preloadModel será chamado.
+    if (navigator.xr) {
+        preloadModel();
+    } else {
+        // Se WebXR não for suportado, o usuário ainda pode tentar com scene-viewer/quick-look
+        startButton.disabled = false; 
+        // A mensagem já foi definida para "WebXR não suportado..."
+    }
+
 
     startButton.addEventListener('click', async () => {
       console.log("Botão 'Iniciar Realidade Aumentada' clicado.");
@@ -241,6 +263,14 @@
 
       try {
         console.log("Tentando ativar AR (modelViewer.activateAR())...");
+        // Verifica se o AR está disponível antes de tentar ativar
+        if (!modelViewer.canActivateAR) {
+            console.warn("modelViewer.canActivateAR é false. O dispositivo pode não suportar os modos de AR configurados ou WebXR.");
+            statusText.innerHTML = "Não foi possível ativar RA.<br>Seu dispositivo pode não suportar os modos de RA necessários (WebXR, SceneViewer ou QuickLook).";
+            startButton.disabled = false;
+            modelViewer.style.display = 'none';
+            return;
+        }
         await modelViewer.activateAR();
         console.log("Comando activateAR() enviado. Aguardando status da sessão AR...");
       } catch (err) {
@@ -281,7 +311,7 @@
     modelViewer.addEventListener('progress', (event) => {
         if (!modelLoaded && preloadAttempted && modelViewer.style.display === 'block') { 
             const percentage = Math.floor(event.detail.totalProgress * 100);
-            statusText.innerHTML = `Carregando modelo: ${percentage}%<br>Por favor, aguarde...`;
+            statusText.innerHTML = `Carregando modelo (7.2MB): ${percentage}%<br>Por favor, aguarde...`;
         }
     });
 
