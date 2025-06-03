@@ -29,7 +29,7 @@
       background-color: #ffffff;
       border-radius: 12px;
       box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-      z-index: 10; /* Para garantir que os controles fiquem visíveis inicialmente */
+      z-index: 10;
     }
     #start-ar-button {
       background-color: #007aff;
@@ -56,19 +56,18 @@
     #status-text {
       color: #555;
       font-size: 15px;
-      min-height: 44px; /* Aumentado para acomodar mensagens mais longas */
+      min-height: 44px; 
       display: flex;
       align-items: center;
       justify-content: center;
     }
     model-viewer {
-      /* Inicialmente escondido, mas será 'block' durante o preload */
       display: none;
-      width: 1px; /* Mínimo para permitir carregamento */
+      width: 1px; 
       height: 1px;
-      position: absolute; /* Fora do fluxo normal */
-      left: -9999px; /* Fora da tela */
-      background-color: transparent; /* Para não causar flash se aparecer brevemente */
+      position: absolute; 
+      left: -9999px; 
+      background-color: transparent;
     }
   </style>
 </head>
@@ -82,8 +81,8 @@
 
   <model-viewer
     id="pizza-ar-viewer"
-    src="https://modelviewer.dev/shared-assets/models/Astronaut.glb" /* <--- SUBSTITUA ESTA URL DE EXEMPLO PELA SUA */
-    alt="Modelo 3D em RA"
+    src="https://raw.githubusercontent.com/julianambatista/PizzaOven/main/pizza%20oven_resized.glb" /* URL do seu modelo no GitHub */
+    alt="Forno de Pizza em RA"
     ar
     ar-modes="webxr scene-viewer quick-look"
     ar-placement="floor"
@@ -125,14 +124,10 @@
         return;
       }
 
-      // Garante que o model-viewer esteja 'display: block' para permitir o carregamento.
-      // Ele já está posicionado fora da tela pelo CSS.
       modelViewer.style.display = 'block';
       console.log("model-viewer display set to 'block' for preloading.");
 
       try {
-        // Espera o componente <model-viewer> estar pronto e ter tentado carregar o src.
-        // Isso não garante que o *modelo* esteja carregado, mas sim que o componente está inicializado.
         console.log("Aguardando modelViewer.updateComplete...");
         await modelViewer.updateComplete;
         console.log("modelViewer.updateComplete resolvido. modelViewer.loaded:", modelViewer.loaded);
@@ -142,14 +137,13 @@
             console.log("Modelo carregado após modelViewer.updateComplete.");
             statusText.textContent = "Modelo pronto. Clique para iniciar RA.";
             startButton.disabled = false;
-            modelViewer.style.display = 'none'; // Esconde após pré-carregamento bem-sucedido
+            modelViewer.style.display = 'none'; 
             return;
         }
 
-        // Se ainda não carregou, aguarda explicitamente o evento 'load' ou 'error'.
         console.log("Modelo não carregado após updateComplete. Aguardando evento 'load' ou 'error'.");
         await new Promise((resolve, reject) => {
-          const PRELOAD_TIMEOUT_MS = 60000; // Aumentado para 60 segundos
+          const PRELOAD_TIMEOUT_MS = 60000; // 60 segundos de timeout
           let timeoutId = setTimeout(() => {
             const errorMsg = `Tempo de ${PRELOAD_TIMEOUT_MS / 1000}s excedido ao pré-carregar modelo: ${modelViewer.src}. Verifique a URL e sua conexão.`;
             console.error(errorMsg);
@@ -183,20 +177,16 @@
         statusText.innerHTML = `Falha ao preparar modelo: ${error.message}<br>Tente recarregar ou verifique a conexão.`;
         startButton.disabled = false;
       } finally {
-        // Se o modelo carregou, esconda o model-viewer (que estava 'block' para preload).
-        // Se não carregou, ele já estará 'none' ou o usuário verá a mensagem de erro.
         if (modelLoaded) {
             modelViewer.style.display = 'none';
             console.log("Modelo carregado, model-viewer display set to 'none'.");
         } else if (modelViewer.style.display === 'block') {
-            // Se houve erro e ele ainda estava block, esconde.
             modelViewer.style.display = 'none';
-            console.log("Pré-carregamento falhou, model-viewer display set to 'none'.");
+            console.log("Pré-carregamento falhou ou não concluído, model-viewer display set to 'none'.");
         }
       }
     };
 
-    // Inicia o pré-carregamento
     startButton.disabled = true;
     statusText.innerHTML = "Preparando modelo, por favor aguarde...<br>(Isso pode levar até um minuto)";
     preloadModel();
@@ -206,7 +196,7 @@
       startButton.disabled = true;
       statusText.textContent = "Iniciando...";
       
-      modelViewer.style.display = 'block'; // Torna visível para AR
+      modelViewer.style.display = 'block'; 
       modelViewer.style.width = '100vw'; 
       modelViewer.style.height = '100vh';
       modelViewer.style.position = 'fixed'; 
@@ -221,7 +211,7 @@
         try {
           if (!modelViewer.loaded) {
             await new Promise((resolve, reject) => {
-              const finalLoadTimeout = setTimeout(() => reject(new Error("Tempo excedido ao carregar modelo para AR (final).")), 30000); // 30s timeout para esta etapa
+              const finalLoadTimeout = setTimeout(() => reject(new Error("Tempo excedido ao carregar modelo para AR (final).")), 30000); 
               
               const finalLoadListener = () => { clearTimeout(finalLoadTimeout); modelLoaded = true; resolve(); };
               const finalErrorListener = (event) => { 
@@ -281,18 +271,16 @@
                 modelViewer.style.display = 'none';
                 if (arControls) arControls.style.display = 'flex';
                 break;
-            case 'consent-needed': // O model-viewer geralmente lida com o prompt.
+            case 'consent-needed': 
                  statusText.textContent = "Permissão necessária para RA.";
                  console.log("AR consent needed.");
                  break;
         }
     });
 
-    // Opcional: Adicionar um listener para o evento 'progress' para feedback de carregamento
     modelViewer.addEventListener('progress', (event) => {
-        if (!modelLoaded && preloadAttempted) { // Apenas durante o pré-carregamento inicial
+        if (!modelLoaded && preloadAttempted && modelViewer.style.display === 'block') { 
             const percentage = Math.floor(event.detail.totalProgress * 100);
-            // console.log(`Progresso do carregamento: ${percentage}%`);
             statusText.innerHTML = `Carregando modelo: ${percentage}%<br>Por favor, aguarde...`;
         }
     });
