@@ -56,11 +56,24 @@
     #status-text {
       color: #555;
       font-size: 15px;
-      min-height: 70px; /* Aumentado para mais texto e feedback de rastreamento */
+      min-height: 80px; /* Aumentado para mais texto */
       display: flex;
       align-items: center;
       justify-content: center;
       flex-direction: column; 
+    }
+    .user-guidance {
+      font-size: 12px;
+      color: #777;
+      max-width: 320px; /* Aumentado um pouco */
+      margin-top: 10px;
+      line-height: 1.4;
+    }
+    .optimization-note {
+        font-size: 13px;
+        color: #c0392b; /* Vermelho suave para destaque */
+        margin-top:10px;
+        font-weight: 500;
     }
     model-viewer {
       display: none; 
@@ -79,8 +92,11 @@
     <h1>Forno de Pizza em Realidade Aumentada</h1>
     <button id="start-ar-button">Iniciar Realidade Aumentada</button>
     <div id="status-text">Verificando compatibilidade...</div>
-    <p style="font-size: 12px; color: #777; max-width: 300px;">
-      Para melhor resultado: use em ambiente bem iluminado e aponte para uma superfície com texturas ou detalhes visuais (evite superfícies muito lisas ou reflexivas).
+    <p class="user-guidance">
+      Para melhor resultado: use em ambiente bem iluminado e aponte para uma superfície com texturas (evite superfícies muito lisas/reflexivas). Mova o telemóvel devagar.
+    </p>
+    <p class="optimization-note">
+        Se o modelo continuar instável, considere otimizar o ficheiro 3D (reduzir tamanho/complexidade).
     </p>
   </div>
 
@@ -105,6 +121,7 @@
     scale="12 12 12"
     field-of-view="30deg"
     autoplay 
+    reveal="interaction" /* O modelo só é revelado após interação ou quando o poster é carregado */
   >
     <div slot="ar-button" style="display: none;"></div>
   </model-viewer>
@@ -115,7 +132,7 @@
     const modelViewer = document.getElementById('pizza-ar-viewer');
     let modelLoaded = false;
     let arActivationAttempted = false;
-    let currentSession = null; // Para guardar a sessão AR ativa
+    let currentSession = null; 
 
     console.log("Script iniciado. Modelo SRC:", modelViewer.src);
 
@@ -213,7 +230,7 @@
     modelViewer.addEventListener('ar-status', (event) => {
         console.log('AR Status Event:', event.detail.status, event.detail.session);
         const arControls = document.getElementById('ar-controls');
-        currentSession = event.detail.session; // Guarda a sessão atual
+        currentSession = event.detail.session; 
 
         switch(event.detail.status) {
             case 'not-presenting':
@@ -225,7 +242,7 @@
                 currentSession = null;
                 break;
             case 'session-started':
-                statusText.innerHTML = "RA ativa! Mova seu dispositivo para encontrar uma superfície.<br>Toque no objeto para reposicionar se necessário.";
+                statusText.innerHTML = "RA ativa! Mova o telemóvel para encontrar uma superfície.<br>Toque no objeto para reposicionar se necessário.";
                 if (arControls) arControls.style.display = 'none'; 
                 break;
             case 'failed':
@@ -243,32 +260,23 @@
         }
     });
 
-    // Evento para monitorar o estado do rastreamento AR
     modelViewer.addEventListener('ar-tracking', (event) => {
-        // Só atualiza o status se a RA estiver ativa e não estivermos já mostrando uma mensagem de erro mais crítica
         if (arActivationAttempted && currentSession && !statusText.innerHTML.toLowerCase().includes('erro') && !statusText.innerHTML.toLowerCase().includes('falha')) {
             switch(event.detail.state) {
                 case 'tracking':
-                    // console.log("Rastreamento AR estável.");
-                    // Poderia limpar mensagens de "procurando superfície", mas pode ser verboso.
-                    // Se a mensagem anterior era sobre "procurando", atualiza.
                     if (statusText.innerHTML.includes("Procurando") || statusText.innerHTML.includes("instável")) {
                         statusText.innerHTML = "RA ativa! Superfície detectada.<br>Toque no objeto para reposicionar.";
                     }
                     break;
                 case 'not-tracking':
                     console.warn("Perda de rastreamento AR ou procurando superfície.");
-                    statusText.innerHTML = "Procurando superfície ou rastreamento instável...<br>Mantenha o dispositivo firme e em ambiente bem iluminado.";
-                    break;
-                default:
-                    // console.log("Estado de rastreamento AR:", event.detail.state);
+                    statusText.innerHTML = "Procurando superfície ou rastreamento instável...<br>Mova o telemóvel devagar. Ambiente bem iluminado e com texturas ajuda.";
                     break;
             }
         }
     });
 
     modelViewer.addEventListener('progress', (event) => {
-        // Mostra o progresso apenas durante a fase de carregamento inicial do modelo
         if (!modelLoaded && arActivationAttempted && modelViewer.style.display === 'block') { 
             const percentage = Math.floor(event.detail.totalProgress * 100);
             statusText.innerHTML = `Carregando modelo (7.2MB): ${percentage}%<br>Por favor, aguarde...`;
