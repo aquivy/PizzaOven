@@ -91,16 +91,16 @@
     ar-modes="webxr scene-viewer quick-look"
     ar-placement="floor"
     ar-scale="fixed"
-    ar-stability="medium"
-    autoplay
+    ar-stability="high" /* Alterado para 'high' para melhor ancoragem */
     shadow-intensity="1"
+    shadow-softness="0.5" /* Adicionado para suavizar a sombra */
     exposure="1.0"
-    disable-tap
-    camera-controls /* Habilitado para visualização 3D antes da RA */
+    /* disable-tap REMOVIDO para permitir reposicionamento pelo utilizador */
+    camera-controls 
     disable-pan
     min-camera-orbit="auto 30deg auto"
     max-camera-orbit="auto 100deg auto"
-    interaction-prompt="auto" /* 'auto' para mostrar prompt se necessário */
+    interaction-prompt="auto" 
     scale="12 12 12"
     field-of-view="30deg"
   >
@@ -123,27 +123,24 @@
       } else {
         console.warn("WebXR não é suportado neste navegador/dispositivo.");
         statusText.innerHTML = "Realidade Aumentada (WebXR) pode não ser totalmente suportada.<br>Modos alternativos (como visualizador 3D) podem funcionar.";
-        startButton.disabled = false; // Permite tentar com scene-viewer/quick-look
+        startButton.disabled = false; 
       }
     };
 
-    checkXRSupport(); // Verifica o suporte ao carregar a página
+    checkXRSupport(); 
 
     const loadAndActivateAR = async () => {
       startButton.disabled = true;
       arActivationAttempted = true;
       
-      // Mostra o model-viewer agora, ele exibirá o poster enquanto carrega.
       modelViewer.style.display = 'block';
       console.log("model-viewer display set to 'block'. Iniciando carregamento do modelo...");
       statusText.innerHTML = "Carregando modelo (aprox 7.2MB)...<br>Isso pode levar até 2 minutos. Por favor, aguarde.";
 
       try {
-        if (!modelLoaded) { // Só carrega se ainda não foi carregado
-          // O evento 'load' será disparado quando o modelo estiver pronto
-          // O evento 'progress' já está configurado para dar feedback
+        if (!modelLoaded) { 
           await new Promise((resolve, reject) => {
-            const LOAD_TIMEOUT_MS = 120000; // Aumentado para 120 segundos (2 minutos)
+            const LOAD_TIMEOUT_MS = 120000; 
             let timeoutId = setTimeout(() => {
               const errorMsg = `Tempo de ${LOAD_TIMEOUT_MS / 1000}s excedido ao carregar modelo: ${modelViewer.src}.<br>Verifique sua conexão ou tente novamente. O arquivo é grande (7.2MB).<br>Considere otimizar o modelo 3D.`;
               console.error(errorMsg.replace(/<br>/g, ' '));
@@ -164,49 +161,39 @@
               console.error(`Erro explícito ao carregar o modelo (${modelViewer.src}):`, errorDetail, event.detail);
               statusText.innerHTML = `Erro ao carregar modelo.<br>Detalhe: ${errorDetail}.<br>Verifique o console e a conexão.`;
               startButton.disabled = false; 
-              modelViewer.style.display = 'none'; // Esconde se falhar
+              modelViewer.style.display = 'none'; 
               reject(new Error(`Erro no carregamento do modelo: ${errorDetail}`));
             };
             
-            // Remove listeners antigos para evitar duplicação se o botão for clicado múltiplas vezes após um erro
             modelViewer.removeEventListener('load', loadListener);
             modelViewer.removeEventListener('error', errorListener);
 
             modelViewer.addEventListener('load', loadListener, { once: true });
             modelViewer.addEventListener('error', errorListener, { once: true });
-
-            // Se o model-viewer já tiver o src e não estiver carregado, ele tentará carregar.
-            // Se o src for alterado dinamicamente, isso também acionaria o carregamento.
-            // Como o src já está definido no HTML, o carregamento começa quando o componente é renderizado
-            // e o modelViewer.style.display = 'block' é chamado.
           });
         } else {
            statusText.textContent = "Modelo já carregado. Iniciando Realidade Aumentada...";
         }
 
-        // Aguarda um pouco para o usuário ler a mensagem de "Modelo Carregado"
         await new Promise(r => setTimeout(r, 1000)); 
         
         console.log("Tentando ativar AR (modelViewer.activateAR())...");
         if (!modelViewer.canActivateAR) {
             console.warn("modelViewer.canActivateAR é false.");
             statusText.innerHTML = "Não foi possível ativar RA.<br>Seu dispositivo pode não suportar os modos de RA necessários (WebXR, SceneViewer ou QuickLook).";
-            startButton.disabled = false; // Permite tentar novamente ou usar visualizador 3D
-            // Não esconder o model-viewer aqui, pois pode estar mostrando o modelo em 3D
+            startButton.disabled = false; 
             return;
         }
         await modelViewer.activateAR();
         console.log("Comando activateAR() enviado. Aguardando status da sessão AR...");
-        // O status da sessão AR será tratado pelo evento 'ar-status'
 
       } catch (error) {
         console.error("Falha na função loadAndActivateAR:", error.message);
-        // A mensagem de erro já deve ter sido definida pelo listener de erro do modelo ou pelo timeout
-        if (!statusText.innerHTML.includes("Erro")) { // Evita sobrescrever mensagem de erro mais específica
+        if (!statusText.innerHTML.includes("Erro")) { 
             statusText.innerHTML = `Falha ao iniciar: ${error.message.replace(/\n/g, '<br>')}`;
         }
         startButton.disabled = false;
-        if (!modelLoaded) modelViewer.style.display = 'none'; // Esconde se o modelo nem carregou
+        if (!modelLoaded) modelViewer.style.display = 'none'; 
       }
     };
 
@@ -219,13 +206,13 @@
             case 'not-presenting':
                 statusText.textContent = "RA finalizada. Clique para iniciar novamente.";
                 startButton.disabled = false;
-                modelViewer.style.display = 'none'; // Esconde o model-viewer ao sair da RA
+                modelViewer.style.display = 'none'; 
                 if (arControls) arControls.style.display = 'flex';
                 arActivationAttempted = false;
                 break;
             case 'session-started':
-                statusText.textContent = "RA ativa! Mova seu dispositivo para encontrar uma superfície.";
-                if (arControls) arControls.style.display = 'none'; // Esconde os controles da página
+                statusText.textContent = "RA ativa! Mova seu dispositivo para encontrar uma superfície. Toque no objeto para reposicionar se necessário.";
+                if (arControls) arControls.style.display = 'none'; 
                 break;
             case 'failed':
                 statusText.innerHTML = "Falha ao iniciar a sessão de RA.<br>Verifique permissões e suporte do dispositivo.";
@@ -242,7 +229,6 @@
     });
 
     modelViewer.addEventListener('progress', (event) => {
-        // Só mostra o progresso se o AR ainda não foi ativado e o carregamento está em andamento
         if (!arActivationAttempted && !modelLoaded && modelViewer.style.display === 'block') { 
             const percentage = Math.floor(event.detail.totalProgress * 100);
             statusText.innerHTML = `Carregando modelo (7.2MB): ${percentage}%<br>Por favor, aguarde...`;
