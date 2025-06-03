@@ -3,18 +3,18 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Forno de Pizza - RA Otimizada e Funcional</title>
+  <title>Forno de Pizza - RA Ancoragem Otimizada</title>
   <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js"></script>
   <style>
     body {
       margin: 0;
-      overflow: hidden; /* Evita barras de rolagem */
+      overflow: hidden;
       background-color: #f0f0f0;
       font-family: sans-serif;
     }
     model-viewer {
-      width: 100vw;   /* Ocupa a largura total da tela */
-      height: 100vh;  /* Ocupa a altura total da tela */
+      width: 100vw;
+      height: 100vh;
       border: none;
       background-color: #f0f0f0;
     }
@@ -23,31 +23,16 @@
 <body>
   <model-viewer
     src="pizza oven_resized2.glb"      alt="Forno de Pizza em Realidade Aumentada"
-    ar                                   ar-modes="webxr scene-viewer quick-look" ar-placement="floor"                 ar-scale="auto"                      shadow-intensity="1"                 exposure="1.0"                       interaction-prompt="none"            camera-controls                      disable-tap="false"                  disable-pan="false"                  autoplay                             loading="eager"                      field-of-view="35deg"                /* *** Aprimoramento de Ancoragem (Ajuste de Posição Inicial) *** */
-    /* Este atributo move a "câmera" do model-viewer, o que faz o modelo parecer subir ou descer.
-       Os valores são "theta phi radius", onde phi é o ângulo vertical.
-       Ajuste o valor do MEIO (phi) para mover o modelo para cima/baixo na tela inicial.
-       Um valor menor (ex: 80deg) fará o modelo parecer "subir" da base se estiver enterrado.
-       Um valor maior (ex: 100deg) fará o modelo parecer "descer".
-       Você pode precisar ajustar este valor com base na sua experiência. */
-    camera-orbit="0deg 85deg auto"       
-    /* min-camera-orbit e max-camera-orbit controlam os limites da órbita na visualização 3D.
-       Podem ser ajustados ou removidos se a órbita livre for preferível. */
-    min-camera-orbit="auto"
+    ar                                   ar-modes="webxr scene-viewer"        ar-placement="floor"                 ar-scale="auto"                      shadow-intensity="1"                 exposure="1.0"                       interaction-prompt="none"            camera-controls                      disable-tap="false"                  disable-pan="false"                  autoplay                             loading="eager"                      field-of-view="35deg"                camera-orbit="0deg 85deg auto"       min-camera-orbit="auto"
     max-camera-orbit="auto"
-
-  >
+    unbounded                            >
   </model-viewer>
 
   <script>
     const modelViewer = document.querySelector('model-viewer');
 
-    // Eventos para depuração e feedback:
     modelViewer.addEventListener('load', () => {
       console.log('Modelo 3D carregado e pronto para exibição.');
-      // Opcional: Você pode tentar um ajuste dinâmico aqui, mas o camera-orbit no HTML é mais imediato.
-      // let modelHeight = modelViewer.model.size.y; // Altura do modelo
-      // modelViewer.cameraOrbit = `0deg ${90 - (modelHeight * 0.5)}deg auto`; // Exemplo para tentar levantar o modelo metade da altura
     });
 
     modelViewer.addEventListener('error', (event) => {
@@ -60,16 +45,41 @@
 
     modelViewer.addEventListener('ar-tracking-limited', (event) => {
       console.warn('Rastreamento AR limitado:', event.detail.reason);
-      if (event.detail.reason === 'too-few-features') {
-        // Mensagem ao usuário para escanear
-        // alert('Mova seu telefone para escanear a superfície e posicionar o objeto.');
+      if (event.detail.reason === 'too-few-features' || event.detail.reason === 'insufficient-features') {
+        alert('Mova seu telefone para escanear a superfície e posicionar o objeto. Ambiente pode ter poucas características.');
+      } else if (event.detail.reason === 'excessive-motion') {
+        alert('Mova seu telefone mais lentamente para melhor rastreamento.');
+      } else if (event.detail.reason === 'insufficient-light') {
+        alert('O ambiente está muito escuro. Tente em um local mais iluminado.');
       }
     });
 
     modelViewer.addEventListener('ar-status', (event) => {
         console.log('Status AR:', event.detail.status);
+        if (event.detail.status === 'not-presenting' && modelViewer.canActivateAR) {
+            // Isso indica que o AR pode ser ativado, mas ainda não está sendo apresentado
+            // O botão AR deve estar visível e clicável.
+            console.warn('RA disponível, mas não apresentando. Clique no botão AR.');
+        } else if (event.detail.status === 'unavailable') {
+            // Dispositivo ou navegador incompatível com a RA
+            console.error('RA indisponível neste dispositivo/navegador.');
+            alert('A Realidade Aumentada não está disponível no seu dispositivo ou navegador. Verifique a compatibilidade (ARCore) e o ambiente.');
+        }
     });
 
+    // Opcional: listener para o clique no botão AR nativo (apenas para debug)
+    // Tenta encontrar o botão no shadow DOM
+    // Um pequeno atraso pode ser necessário se o shadow DOM não estiver pronto imediatamente
+    setTimeout(() => {
+        const arButton = modelViewer.shadowRoot ? modelViewer.shadowRoot.querySelector('.ar-button') : null;
+        if (arButton) {
+            arButton.addEventListener('click', () => {
+                console.log("Botão AR nativo clicado!");
+            });
+        } else {
+            console.warn("Botão AR nativo não encontrado no Shadow DOM. Problema de suporte AR?");
+        }
+    }, 1000); // Dá um segundo para o Shadow DOM carregar
   </script>
 </body>
 </html>
