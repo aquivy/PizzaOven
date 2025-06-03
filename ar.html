@@ -91,11 +91,10 @@
     ar-modes="webxr scene-viewer quick-look"
     ar-placement="floor"
     ar-scale="fixed"
-    ar-stability="high" /* Alterado para 'high' para melhor ancoragem */
+    ar-stability="high" 
     shadow-intensity="1"
-    shadow-softness="0.5" /* Adicionado para suavizar a sombra */
+    shadow-softness="0.5" 
     exposure="1.0"
-    /* disable-tap REMOVIDO para permitir reposicionamento pelo utilizador */
     camera-controls 
     disable-pan
     min-camera-orbit="auto 30deg auto"
@@ -103,6 +102,9 @@
     interaction-prompt="auto" 
     scale="12 12 12"
     field-of-view="30deg"
+    autoplay /* Tenta tocar a animação padrão automaticamente */
+    /* Se o seu modelo tiver uma animação específica, descomente e substitua [NomeDaAnimacao] abaixo: */
+    /* animation-name="[NomeDaAnimacao]" */ 
   >
     <div slot="ar-button" style="display: none;"></div> </model-viewer>
 
@@ -151,7 +153,17 @@
               clearTimeout(timeoutId);
               modelLoaded = true;
               console.log("Modelo carregado com sucesso:", modelViewer.src);
-              statusText.textContent = "Modelo carregado! Iniciando Realidade Aumentada...";
+              
+              // Lista as animações disponíveis no console
+              if (modelViewer.availableAnimations && modelViewer.availableAnimations.length > 0) {
+                console.log("Animações disponíveis no modelo:", modelViewer.availableAnimations);
+                statusText.textContent = "Modelo carregado! Animações disponíveis: " + modelViewer.availableAnimations.join(', ') + ". Iniciando RA...";
+                // Se houver animações e 'autoplay' estiver ativo, ela deve começar.
+                // Se precisar de uma específica, use o atributo 'animation-name'.
+              } else {
+                console.log("Nenhuma animação encontrada no modelo.");
+                statusText.textContent = "Modelo carregado! (Nenhuma animação encontrada). Iniciando RA...";
+              }
               resolve();
             };
 
@@ -175,7 +187,7 @@
            statusText.textContent = "Modelo já carregado. Iniciando Realidade Aumentada...";
         }
 
-        await new Promise(r => setTimeout(r, 1000)); 
+        await new Promise(r => setTimeout(r, 1500)); // Aumentado um pouco o delay para ler o status da animação
         
         console.log("Tentando ativar AR (modelViewer.activateAR())...");
         if (!modelViewer.canActivateAR) {
