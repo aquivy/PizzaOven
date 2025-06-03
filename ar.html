@@ -56,19 +56,21 @@
     #status-text {
       color: #555;
       font-size: 15px;
-      min-height: 60px; /* Aumentado para mais texto */
+      min-height: 60px; 
       display: flex;
       align-items: center;
       justify-content: center;
-      flex-direction: column; /* Para empilhar mensagens */
+      flex-direction: column; 
     }
     model-viewer {
-      display: none;
-      width: 1px; 
-      height: 1px;
-      position: absolute; 
-      left: -9999px; 
-      background-color: transparent;
+      display: none; /* Começa escondido, será mostrado ao clicar no botão */
+      width: 100vw; /* Ocupará tela cheia quando visível para AR */
+      height: 100vh;
+      position: fixed; /* Para sobrepor outros elementos */
+      top: 0;
+      left: 0;
+      z-index: 1000; /* Para ficar na frente */
+      background-color: #f0f0f0; /* Cor de fundo enquanto carrega */
     }
   </style>
 </head>
@@ -76,16 +78,17 @@
   <div id="ar-controls">
     <h1>Forno de Pizza em Realidade Aumentada</h1>
     <button id="start-ar-button">Iniciar Realidade Aumentada</button>
-    <div id="status-text">Clique no botão para carregar o modelo.</div>
+    <div id="status-text">Verificando compatibilidade...</div>
     <p style="font-size: 12px; color: #777;">Certifique-se de que seu ambiente está bem iluminado e aponte para uma superfície plana.</p>
   </div>
 
   <model-viewer
     id="pizza-ar-viewer"
-    src="https://raw.githubusercontent.com/julianambatista/PizzaOven/main/pizza%20oven_resized.glb" /* URL do seu modelo no GitHub */
+    src="https://raw.githubusercontent.com/julianambatista/PizzaOven/main/pizza%20oven_resized.glb"
+    poster="https://placehold.co/600x400/FF6347/FFFFFF?text=Forno+de+Pizza\nCarregando..." /* Imagem de placeholder */
     alt="Forno de Pizza em RA"
     ar
-    ar-modes="webxr scene-viewer quick-look" /* Fallbacks para Android e iOS */
+    ar-modes="webxr scene-viewer quick-look"
     ar-placement="floor"
     ar-scale="fixed"
     ar-stability="medium"
@@ -93,193 +96,121 @@
     shadow-intensity="1"
     exposure="1.0"
     disable-tap
-    camera-controls
+    camera-controls /* Habilitado para visualização 3D antes da RA */
     disable-pan
     min-camera-orbit="auto 30deg auto"
     max-camera-orbit="auto 100deg auto"
-    interaction-prompt="none"
+    interaction-prompt="auto" /* 'auto' para mostrar prompt se necessário */
     scale="12 12 12"
     field-of-view="30deg"
   >
-    <div slot="ar-button" style="display: none;"></div>
-  </model-viewer>
+    <div slot="ar-button" style="display: none;"></div> </model-viewer>
 
   <script>
     const startButton = document.getElementById('start-ar-button');
     const statusText = document.getElementById('status-text');
     const modelViewer = document.getElementById('pizza-ar-viewer');
     let modelLoaded = false;
-    let preloadAttempted = false;
+    let arActivationAttempted = false;
 
-    console.log("Script iniciado. Tentando carregar modelo de:", modelViewer.src);
-    statusText.innerHTML = "Verificando suporte a WebXR...";
+    console.log("Script iniciado. Modelo SRC:", modelViewer.src);
 
-    if (!navigator.xr) {
-        console.warn("WebXR não é suportado neste navegador/dispositivo.");
-        statusText.innerHTML = "Realidade Aumentada (WebXR) não é suportada neste navegador ou dispositivo.<br>Alguns modos alternativos podem funcionar.";
-        // Não desabilitar o botão, pois scene-viewer/quick-look podem funcionar
-    } else {
+    const checkXRSupport = () => {
+      if (navigator.xr) {
         console.log("WebXR é suportado.");
-        statusText.innerHTML = "WebXR suportado. Clique no botão para carregar o modelo.";
-    }
-
-
-    const preloadModel = async () => {
-      preloadAttempted = true;
-      console.log("preloadModel chamado. modelViewer.loaded:", modelViewer.loaded);
-      statusText.innerHTML = "Iniciando carregamento do modelo (aprox 7.2MB)...<br>Isso pode levar um momento, por favor aguarde.";
-
-
-      if (modelViewer.loaded) {
-        modelLoaded = true;
-        console.log("Modelo já estava carregado.");
-        statusText.textContent = "Modelo pronto. Clique para iniciar RA.";
+        statusText.innerHTML = "Dispositivo compatível.<br>Clique no botão para carregar o modelo (7.2MB).";
         startButton.disabled = false;
-        return;
-      }
-
-      modelViewer.style.display = 'block';
-      console.log("model-viewer display set to 'block' for preloading.");
-
-      try {
-        console.log("Aguardando modelViewer.updateComplete...");
-        await modelViewer.updateComplete;
-        console.log("modelViewer.updateComplete resolvido. modelViewer.loaded:", modelViewer.loaded);
-        
-        if (modelViewer.loaded) {
-            modelLoaded = true;
-            console.log("Modelo carregado após modelViewer.updateComplete.");
-            statusText.textContent = "Modelo pronto. Clique para iniciar RA.";
-            startButton.disabled = false;
-            modelViewer.style.display = 'none'; 
-            return;
-        }
-
-        console.log("Modelo não carregado após updateComplete. Aguardando evento 'load' ou 'error'.");
-        await new Promise((resolve, reject) => {
-          const PRELOAD_TIMEOUT_MS = 60000; // 60 segundos de timeout
-          let timeoutId = setTimeout(() => {
-            const errorMsg = `Tempo de ${PRELOAD_TIMEOUT_MS / 1000}s excedido ao pré-carregar modelo: ${modelViewer.src}.<br>Verifique sua conexão ou tente novamente. O arquivo é grande (7.2MB).`;
-            console.error(errorMsg.replace('<br>', ' '));
-            reject(new Error(errorMsg));
-          }, PRELOAD_TIMEOUT_MS);
-
-          const loadListener = () => {
-            clearTimeout(timeoutId);
-            modelLoaded = true;
-            console.log("Modelo pré-carregado com sucesso via evento 'load':", modelViewer.src);
-            statusText.textContent = "Modelo pronto! Clique para iniciar RA.";
-            startButton.disabled = false;
-            resolve();
-          };
-
-          const errorListener = (event) => {
-            clearTimeout(timeoutId);
-            const errorDetail = event.detail?.sourceError?.message || event.detail?.message || event.detail || "Erro desconhecido";
-            console.error(`Erro explícito ao pré-carregar o modelo (${modelViewer.src}):`, errorDetail, event.detail);
-            statusText.innerHTML = `Erro ao carregar modelo (${modelViewer.src.substring(modelViewer.src.lastIndexOf('/')+1)}).<br>Detalhe: ${errorDetail}.<br>Verifique o console e a conexão.`;
-            startButton.disabled = false; 
-            reject(new Error(`Erro no pré-carregamento do modelo: ${errorDetail}`));
-          };
-          
-          modelViewer.addEventListener('load', loadListener, { once: true });
-          modelViewer.addEventListener('error', errorListener, { once: true });
-        });
-
-      } catch (error) {
-        console.error("Falha na função preloadModel:", error.message);
-        statusText.innerHTML = `Falha ao preparar modelo: ${error.message.replace(/\n/g, '<br>')}`;
-        startButton.disabled = false;
-      } finally {
-        if (modelLoaded) {
-            modelViewer.style.display = 'none';
-            console.log("Modelo carregado, model-viewer display set to 'none'.");
-        } else if (modelViewer.style.display === 'block') {
-            modelViewer.style.display = 'none';
-            console.log("Pré-carregamento falhou ou não concluído, model-viewer display set to 'none'.");
-        }
+      } else {
+        console.warn("WebXR não é suportado neste navegador/dispositivo.");
+        statusText.innerHTML = "Realidade Aumentada (WebXR) pode não ser totalmente suportada.<br>Modos alternativos (como visualizador 3D) podem funcionar.";
+        startButton.disabled = false; // Permite tentar com scene-viewer/quick-look
       }
     };
 
-    startButton.disabled = true; // Será habilitado após verificação do WebXR e/ou preload
-    // A mensagem inicial de status já é definida após a verificação do WebXR.
-    // Se WebXR for suportado, o preloadModel será chamado.
-    if (navigator.xr) {
-        preloadModel();
-    } else {
-        // Se WebXR não for suportado, o usuário ainda pode tentar com scene-viewer/quick-look
-        startButton.disabled = false; 
-        // A mensagem já foi definida para "WebXR não suportado..."
-    }
+    checkXRSupport(); // Verifica o suporte ao carregar a página
 
-
-    startButton.addEventListener('click', async () => {
-      console.log("Botão 'Iniciar Realidade Aumentada' clicado.");
+    const loadAndActivateAR = async () => {
       startButton.disabled = true;
-      statusText.textContent = "Iniciando...";
+      arActivationAttempted = true;
       
-      modelViewer.style.display = 'block'; 
-      modelViewer.style.width = '100vw'; 
-      modelViewer.style.height = '100vh';
-      modelViewer.style.position = 'fixed'; 
-      modelViewer.style.left = '0';
-      modelViewer.style.top = '0';
-      modelViewer.style.zIndex = '1000'; 
-      console.log("model-viewer preparado para AR (display: block, fullscreen).");
-
-      if (!modelLoaded) {
-        statusText.innerHTML = "Aguardando carregamento final do modelo...<br>Verifique sua conexão.";
-        console.log("Modelo não estava pré-carregado, tentando carregar agora para AR.");
-        try {
-          if (!modelViewer.loaded) {
-            await new Promise((resolve, reject) => {
-              const finalLoadTimeout = setTimeout(() => reject(new Error("Tempo excedido ao carregar modelo para AR (final).")), 30000); 
-              
-              const finalLoadListener = () => { clearTimeout(finalLoadTimeout); modelLoaded = true; resolve(); };
-              const finalErrorListener = (event) => { 
-                clearTimeout(finalLoadTimeout); 
-                const errorDetail = event.detail?.sourceError?.message || event.detail?.message || "Erro desconhecido";
-                reject(new Error(`Erro ao carregar modelo para AR (final): ${errorDetail}`));
-              };
-
-              modelViewer.addEventListener('load', finalLoadListener, { once: true });
-              modelViewer.addEventListener('error', finalErrorListener, { once: true });
-            });
-          } else {
-            modelLoaded = true; 
-          }
-          console.log("Modelo carregado e pronto para AR (no clique).");
-        } catch (err) {
-          console.error("Erro durante o carregamento para AR (no clique):", err.message);
-          statusText.innerHTML = "Erro ao carregar modelo: " + err.message + "<br>Tente novamente.";
-          startButton.disabled = false;
-          modelViewer.style.display = 'none'; 
-          return;
-        }
-      }
-
-      statusText.textContent = "Iniciando Realidade Aumentada...";
-      await new Promise(r => setTimeout(r, 500)); 
+      // Mostra o model-viewer agora, ele exibirá o poster enquanto carrega.
+      modelViewer.style.display = 'block';
+      console.log("model-viewer display set to 'block'. Iniciando carregamento do modelo...");
+      statusText.innerHTML = "Carregando modelo (aprox 7.2MB)...<br>Isso pode levar até 2 minutos. Por favor, aguarde.";
 
       try {
+        if (!modelLoaded) { // Só carrega se ainda não foi carregado
+          // O evento 'load' será disparado quando o modelo estiver pronto
+          // O evento 'progress' já está configurado para dar feedback
+          await new Promise((resolve, reject) => {
+            const LOAD_TIMEOUT_MS = 120000; // Aumentado para 120 segundos (2 minutos)
+            let timeoutId = setTimeout(() => {
+              const errorMsg = `Tempo de ${LOAD_TIMEOUT_MS / 1000}s excedido ao carregar modelo: ${modelViewer.src}.<br>Verifique sua conexão ou tente novamente. O arquivo é grande (7.2MB).<br>Considere otimizar o modelo 3D.`;
+              console.error(errorMsg.replace(/<br>/g, ' '));
+              reject(new Error(errorMsg));
+            }, LOAD_TIMEOUT_MS);
+
+            const loadListener = () => {
+              clearTimeout(timeoutId);
+              modelLoaded = true;
+              console.log("Modelo carregado com sucesso:", modelViewer.src);
+              statusText.textContent = "Modelo carregado! Iniciando Realidade Aumentada...";
+              resolve();
+            };
+
+            const errorListener = (event) => {
+              clearTimeout(timeoutId);
+              const errorDetail = event.detail?.sourceError?.message || event.detail?.message || event.detail || "Erro desconhecido";
+              console.error(`Erro explícito ao carregar o modelo (${modelViewer.src}):`, errorDetail, event.detail);
+              statusText.innerHTML = `Erro ao carregar modelo.<br>Detalhe: ${errorDetail}.<br>Verifique o console e a conexão.`;
+              startButton.disabled = false; 
+              modelViewer.style.display = 'none'; // Esconde se falhar
+              reject(new Error(`Erro no carregamento do modelo: ${errorDetail}`));
+            };
+            
+            // Remove listeners antigos para evitar duplicação se o botão for clicado múltiplas vezes após um erro
+            modelViewer.removeEventListener('load', loadListener);
+            modelViewer.removeEventListener('error', errorListener);
+
+            modelViewer.addEventListener('load', loadListener, { once: true });
+            modelViewer.addEventListener('error', errorListener, { once: true });
+
+            // Se o model-viewer já tiver o src e não estiver carregado, ele tentará carregar.
+            // Se o src for alterado dinamicamente, isso também acionaria o carregamento.
+            // Como o src já está definido no HTML, o carregamento começa quando o componente é renderizado
+            // e o modelViewer.style.display = 'block' é chamado.
+          });
+        } else {
+           statusText.textContent = "Modelo já carregado. Iniciando Realidade Aumentada...";
+        }
+
+        // Aguarda um pouco para o usuário ler a mensagem de "Modelo Carregado"
+        await new Promise(r => setTimeout(r, 1000)); 
+        
         console.log("Tentando ativar AR (modelViewer.activateAR())...");
-        // Verifica se o AR está disponível antes de tentar ativar
         if (!modelViewer.canActivateAR) {
-            console.warn("modelViewer.canActivateAR é false. O dispositivo pode não suportar os modos de AR configurados ou WebXR.");
+            console.warn("modelViewer.canActivateAR é false.");
             statusText.innerHTML = "Não foi possível ativar RA.<br>Seu dispositivo pode não suportar os modos de RA necessários (WebXR, SceneViewer ou QuickLook).";
-            startButton.disabled = false;
-            modelViewer.style.display = 'none';
+            startButton.disabled = false; // Permite tentar novamente ou usar visualizador 3D
+            // Não esconder o model-viewer aqui, pois pode estar mostrando o modelo em 3D
             return;
         }
         await modelViewer.activateAR();
         console.log("Comando activateAR() enviado. Aguardando status da sessão AR...");
-      } catch (err) {
-        console.error("Erro ao chamar activateAR():", err.message);
-        statusText.innerHTML = "Erro ao iniciar RA: " + err.message + "<br>Verifique permissões e suporte do dispositivo.";
+        // O status da sessão AR será tratado pelo evento 'ar-status'
+
+      } catch (error) {
+        console.error("Falha na função loadAndActivateAR:", error.message);
+        // A mensagem de erro já deve ter sido definida pelo listener de erro do modelo ou pelo timeout
+        if (!statusText.innerHTML.includes("Erro")) { // Evita sobrescrever mensagem de erro mais específica
+            statusText.innerHTML = `Falha ao iniciar: ${error.message.replace(/\n/g, '<br>')}`;
+        }
         startButton.disabled = false;
-        modelViewer.style.display = 'none'; 
+        if (!modelLoaded) modelViewer.style.display = 'none'; // Esconde se o modelo nem carregou
       }
-    });
+    };
+
+    startButton.addEventListener('click', loadAndActivateAR);
 
     modelViewer.addEventListener('ar-status', (event) => {
         console.log('AR Status Event:', event.detail.status);
@@ -288,18 +219,20 @@
             case 'not-presenting':
                 statusText.textContent = "RA finalizada. Clique para iniciar novamente.";
                 startButton.disabled = false;
-                modelViewer.style.display = 'none'; 
+                modelViewer.style.display = 'none'; // Esconde o model-viewer ao sair da RA
                 if (arControls) arControls.style.display = 'flex';
+                arActivationAttempted = false;
                 break;
             case 'session-started':
-                statusText.textContent = "RA ativa. Mova seu dispositivo para encontrar uma superfície.";
-                if (arControls) arControls.style.display = 'none';
+                statusText.textContent = "RA ativa! Mova seu dispositivo para encontrar uma superfície.";
+                if (arControls) arControls.style.display = 'none'; // Esconde os controles da página
                 break;
             case 'failed':
-                statusText.innerHTML = "Falha ao iniciar a sessão de RA.<br>Verifique permissões/suporte do dispositivo.";
+                statusText.innerHTML = "Falha ao iniciar a sessão de RA.<br>Verifique permissões e suporte do dispositivo.";
                 startButton.disabled = false;
-                modelViewer.style.display = 'none';
+                modelViewer.style.display = 'none'; 
                 if (arControls) arControls.style.display = 'flex';
+                arActivationAttempted = false;
                 break;
             case 'consent-needed': 
                  statusText.textContent = "Permissão necessária para RA.";
@@ -309,7 +242,8 @@
     });
 
     modelViewer.addEventListener('progress', (event) => {
-        if (!modelLoaded && preloadAttempted && modelViewer.style.display === 'block') { 
+        // Só mostra o progresso se o AR ainda não foi ativado e o carregamento está em andamento
+        if (!arActivationAttempted && !modelLoaded && modelViewer.style.display === 'block') { 
             const percentage = Math.floor(event.detail.totalProgress * 100);
             statusText.innerHTML = `Carregando modelo (7.2MB): ${percentage}%<br>Por favor, aguarde...`;
         }
