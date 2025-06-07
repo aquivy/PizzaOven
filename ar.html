@@ -86,30 +86,12 @@
             display: none;
             background-color: transparent;
         }
-
-        #exit-button {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 1000;
-            background-color: rgba(0, 0, 0, 0.5);
-            color: white;
-            border: none;
-            font-size: 24px;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            cursor: pointer;
-            display: none;
-        }
     </style>
 </head>
 <body>
     <div id="action-container">
         <button id="start-ar-button">Visualizar em Realidade Aumentada</button>
     </div>
-
-    <button id="exit-button">&times;</button>
 
     <model-viewer
         id="pizza-ar-viewer"
@@ -138,7 +120,6 @@
             const startButton = document.getElementById('start-ar-button');
             const modelViewer = document.getElementById('pizza-ar-viewer');
             const container = document.getElementById('action-container');
-            const exitButton = document.getElementById('exit-button');
             let arLaunched = false;
 
             function resetToStart() {
@@ -146,7 +127,10 @@
                 modelViewer.style.display = 'none';
                 container.style.display = 'flex';
                 startButton.disabled = false;
-                exitButton.style.display = 'none';
+                modelViewer.removeAttribute('reveal');
+                modelViewer.removeAttribute('poster');
+                modelViewer.setAttribute('autoplay', '');
+                modelViewer.setAttribute('animation-name', '*');
             }
 
             document.addEventListener('visibilitychange', () => {
@@ -159,19 +143,16 @@
                 startButton.disabled = true;
                 container.style.display = 'none';
                 modelViewer.style.display = 'block';
-                exitButton.style.display = 'block';
 
                 try {
+                    modelViewer.setAttribute('autoplay', '');
+                    modelViewer.setAttribute('animation-name', '*');
                     await modelViewer.activateAR();
                     arLaunched = true;
                 } catch (err) {
                     console.error("Erro ao ativar AR:", err);
                     resetToStart();
                 }
-            });
-
-            exitButton.addEventListener('click', () => {
-                resetToStart();
             });
         });
     </script>
