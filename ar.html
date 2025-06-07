@@ -113,7 +113,7 @@
 </head>
 <body>
   <div id="action-container">
-    <button id="start-ar-button">Aponte a câmera para uma superfície plana e clique aqui para visualizar a demonstração em realidade aumentada.</button>
+    <button id="start-ar-button">Clique para iniciar e depois toque na superfície para posicionar o forno.</button>
     <div id="status-message"></div>
   </div>
 
@@ -136,9 +136,7 @@
     exposure="1.0"
     disable-zoom
     disable-pan
-    disable-tap
     camera-controls="false"
-    interaction-prompt="none"
     scale="1 1 1">
     <div slot="ar-button" style="display: none;"></div>
   </model-viewer>
@@ -176,6 +174,9 @@
         displayStatus(message);
         hideLoading();
       }
+
+      // Mostra o botão inicial assim que o JS carregar
+      resetToStart();
 
       document.addEventListener('visibilitychange', () => {
         if (document.visibilityState === 'visible' && arActive) {
