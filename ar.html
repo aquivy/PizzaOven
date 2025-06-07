@@ -172,6 +172,8 @@
             const statusMessage = document.getElementById('status-message');
             const loadingText = document.getElementById('loading-text');
 
+            let arActive = false;
+
             function showLoading(message = 'Carregando Realidade Aumentada...') {
                 loadingText.textContent = message;
                 loadingOverlay.style.display = 'flex';
@@ -188,6 +190,7 @@
             }
 
             function resetToStart(message = '') {
+                arActive = false;
                 container.style.display = 'flex';
                 startButton.disabled = false;
                 displayStatus(message);
@@ -195,7 +198,13 @@
             }
 
             document.addEventListener('visibilitychange', () => {
-                if (document.visibilityState === 'visible') {
+                if (document.visibilityState === 'visible' && arActive) {
+                    resetToStart();
+                }
+            });
+
+            modelViewer.addEventListener('ar-status', (event) => {
+                if (event.detail.status === 'not-presenting' && arActive) {
                     resetToStart();
                 }
             });
@@ -213,6 +222,7 @@
                         });
                     }
                     hideLoading();
+                    arActive = true;
                     await modelViewer.activateAR();
                 } catch (err) {
                     console.error("Erro ao ativar AR:", err);
