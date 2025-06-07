@@ -127,38 +127,28 @@
             const modelViewer = document.getElementById('viewer');
             const actionContainer = document.getElementById('action-container');
 
-            let arSessionStarted = false;
-
             startButton.addEventListener('click', async () => {
                 actionContainer.style.display = 'none';
                 modelViewer.style.display = 'block';
                 closeButton.style.display = 'block';
-
                 try {
                     await modelViewer.activateAR();
-
-                    // Após ativar AR, escuta por movimento inesperado do modelo e bloqueia reancoragem
-                    const session = modelViewer?.xrSession;
-                    if (session && !arSessionStarted) {
-                        arSessionStarted = true;
-                        const refSpace = await session.requestReferenceSpace('local');
-
-                        session.addEventListener('select', () => {
-                            session.requestAnimationFrame(() => {
-                                session.requestReferenceSpace('local'); // manter ref fixa
-                            });
-                        });
-                    }
                 } catch (err) {
                     console.error('Erro ao iniciar AR:', err);
+                    modelViewer.style.display = 'none';
+                    closeButton.style.display = 'none';
+                    actionContainer.style.display = 'flex';
                 }
             });
 
             closeButton.addEventListener('click', () => {
+                // Encerra a sessão AR se ativa
+                if (modelViewer.xrSession) {
+                    modelViewer.xrSession.end();
+                }
                 modelViewer.style.display = 'none';
                 closeButton.style.display = 'none';
                 actionContainer.style.display = 'flex';
-                arSessionStarted = false;
             });
         });
     </script>
