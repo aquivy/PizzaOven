@@ -77,14 +77,7 @@
         }
 
         model-viewer#pizza-ar-viewer {
-            width: 100vw;
-            height: 100vh;
-            position: fixed;
-            top: 0;
-            left: 0;
-            z-index: 1;
-            display: none;
-            background-color: transparent;
+            display: none !important;
         }
     </style>
 </head>
@@ -120,21 +113,14 @@
             const startButton = document.getElementById('start-ar-button');
             const modelViewer = document.getElementById('pizza-ar-viewer');
             const container = document.getElementById('action-container');
-            let arLaunched = false;
 
             function resetToStart() {
-                modelViewer.pause();
-                modelViewer.style.display = 'none';
                 container.style.display = 'flex';
                 startButton.disabled = false;
-                modelViewer.removeAttribute('reveal');
-                modelViewer.removeAttribute('poster');
-                modelViewer.setAttribute('autoplay', '');
-                modelViewer.setAttribute('animation-name', '*');
             }
 
             document.addEventListener('visibilitychange', () => {
-                if (document.visibilityState === 'visible' && arLaunched) {
+                if (document.visibilityState === 'visible') {
                     resetToStart();
                 }
             });
@@ -142,13 +128,9 @@
             startButton.addEventListener('click', async () => {
                 startButton.disabled = true;
                 container.style.display = 'none';
-                modelViewer.style.display = 'block';
 
                 try {
-                    modelViewer.setAttribute('autoplay', '');
-                    modelViewer.setAttribute('animation-name', '*');
                     await modelViewer.activateAR();
-                    arLaunched = true;
                 } catch (err) {
                     console.error("Erro ao ativar AR:", err);
                     resetToStart();
