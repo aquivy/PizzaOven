@@ -108,7 +108,7 @@
         camera-controls="false"
         interaction-prompt="none"
         ios-src=""
-        style="background-color: transparent">
+        style="background-color: transparent; visibility: hidden;">
         <div slot="ar-button" style="display: none;"></div>
     </model-viewer>
 
@@ -121,6 +121,7 @@
 
             function resetToStart() {
                 modelViewer.style.display = 'none';
+                modelViewer.style.visibility = 'hidden';
                 container.style.display = 'flex';
                 startButton.disabled = false;
             }
@@ -135,6 +136,7 @@
                 startButton.disabled = true;
                 container.style.display = 'none';
                 modelViewer.style.display = 'block';
+                modelViewer.style.visibility = 'hidden';
 
                 try {
                     await modelViewer.activateAR();
