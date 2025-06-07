@@ -77,7 +77,12 @@
         }
 
         model-viewer#pizza-ar-viewer {
-            display: none !important;
+            width: 0;
+            height: 0;
+            position: absolute;
+            top: -9999px;
+            left: -9999px;
+            visibility: hidden;
         }
     </style>
 </head>
@@ -96,14 +101,13 @@
         ar-modes="webxr scene-viewer quick-look"
         ar-placement="floor"
         environment-image="neutral"
-        camera-controls="false"
         shadow-intensity="1"
         exposure="1.0"
-        interaction-prompt="none"
         disable-zoom
         disable-pan
         disable-tap
-        style="display: none;"
+        camera-controls="false"
+        interaction-prompt="none"
         scale="1 1 1">
         <div slot="ar-button" style="display: none;"></div>
     </model-viewer>
@@ -130,6 +134,13 @@
                 container.style.display = 'none';
 
                 try {
+                    if (!modelViewer.loaded) {
+                        await new Promise((resolve, reject) => {
+                            modelViewer.addEventListener('load', resolve, { once: true });
+                            modelViewer.addEventListener('error', reject, { once: true });
+                        });
+                    }
+
                     await modelViewer.activateAR();
                 } catch (err) {
                     console.error("Erro ao ativar AR:", err);
