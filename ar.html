@@ -66,9 +66,6 @@
         }
 
         model-viewer {
-            width: 100vw;
-            height: 100vh;
-            background-color: white;
             display: none;
         }
 
@@ -116,7 +113,8 @@
         disable-tap
         camera-controls="false"
         interaction-prompt="none"
-        scale="1 1 1">
+        scale="1 1 1"
+        style="display: none">
         <div slot="ar-button" style="display: none;"></div>
     </model-viewer>
 
@@ -129,26 +127,29 @@
 
             startButton.addEventListener('click', async () => {
                 actionContainer.style.display = 'none';
-                modelViewer.style.display = 'block';
                 closeButton.style.display = 'block';
                 try {
                     await modelViewer.activateAR();
                 } catch (err) {
                     console.error('Erro ao iniciar AR:', err);
-                    modelViewer.style.display = 'none';
                     closeButton.style.display = 'none';
                     actionContainer.style.display = 'flex';
                 }
             });
 
             closeButton.addEventListener('click', () => {
-                // Encerra a sessão AR se ativa
                 if (modelViewer.xrSession) {
                     modelViewer.xrSession.end();
                 }
-                modelViewer.style.display = 'none';
                 closeButton.style.display = 'none';
                 actionContainer.style.display = 'flex';
+            });
+
+            modelViewer.addEventListener('ar-status', (event) => {
+                if (event.detail.status === 'not-presenting') {
+                    closeButton.style.display = 'none';
+                    actionContainer.style.display = 'flex';
+                }
             });
         });
     </script>
