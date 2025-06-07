@@ -78,11 +78,10 @@
 
         model-viewer#pizza-ar-viewer {
             position: absolute;
-            top: -10000px;
-            left: -10000px;
+            top: -9999px;
+            left: -9999px;
             width: 1px;
             height: 1px;
-            opacity: 0;
         }
     </style>
 </head>
@@ -140,7 +139,6 @@
                             modelViewer.addEventListener('error', reject, { once: true });
                         });
                     }
-
                     await modelViewer.activateAR();
                 } catch (err) {
                     console.error("Erro ao ativar AR:", err);
