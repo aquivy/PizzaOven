@@ -97,16 +97,19 @@
         src="https://raw.githubusercontent.com/julianambatista/PizzaOven/main/pizza%20oven_resized.glb"
         alt="Forno de Pizza em Realidade Aumentada"
         ar
-        ar-modes="scene-viewer quick-look"
+        ar-modes="webxr scene-viewer quick-look"
         ar-placement="floor"
         ar-scale="fixed"
-        autoplay
         shadow-intensity="1"
         exposure="1.0"
         disable-zoom
+        disable-pan
         disable-tap
         camera-controls="false"
+        interaction-prompt="none"
+        ios-src=""
         style="background-color: transparent">
+        <div slot="ar-button" style="display: none;"></div>
     </model-viewer>
 
     <script>
