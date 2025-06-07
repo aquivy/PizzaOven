@@ -88,16 +88,6 @@
             border-radius: 5px;
         }
 
-        model-viewer#pizza-ar-viewer {
-            width: 100vw;
-            height: 100vh;
-            position: fixed;
-            top: 0;
-            left: 0;
-            z-index: 1;
-            display: none;
-        }
-
         #loading-overlay {
             position: fixed;
             top: 0;
@@ -128,6 +118,14 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+
+        model-viewer#pizza-ar-viewer {
+            position: absolute;
+            top: -9999px;
+            left: -9999px;
+            width: 1px;
+            height: 1px;
+        }
     </style>
 </head>
 <body>
@@ -143,139 +141,80 @@
 
     <model-viewer
         id="pizza-ar-viewer"
-        
-        src="intent://arvr.google.com/scene-viewer/1.0?file=https://raw.githubusercontent.com/julianambatista/PizzaOven/main/pizza%20oven_resized.glb&mode=ar_only#Intent;scheme=https;package=com.google.ar.core;action=android.intent.action.VIEW;end;"
-        
-        ios-src="https://raw.githubusercontent.com/julianambatista/PizzaOven/main/pizza%20oven_resized.glb"
-        
+        src="https://raw.githubusercontent.com/julianambatista/PizzaOven/main/pizza%20oven_resized.glb"
         alt="Forno de Pizza em Realidade Aumentada"
         ar
-        ar-modes="scene-viewer quick-look webxr" 
-        ar-placement="floor"
-        ar-scale="fixed"
         autoplay
-        camera-controls
+        animation-name="*"
+        ar-modes="webxr scene-viewer quick-look"
+        ar-placement="floor"
+        environment-image="neutral"
         shadow-intensity="1"
         exposure="1.0"
-        style="background-color: transparent">
-        
+        disable-zoom
+        disable-pan
+        disable-tap
+        camera-controls="false"
+        interaction-prompt="none"
+        scale="1 1 1">
         <div slot="ar-button" style="display: none;"></div>
     </model-viewer>
 
     <script>
-        // O CÓDIGO JAVASCRIPT PERMANECE O MESMO DA VERSÃO ANTERIOR
         document.addEventListener('DOMContentLoaded', () => {
-            const startArButton = document.getElementById('start-ar-button');
-            const modelViewerElement = document.getElementById('pizza-ar-viewer');
-            const actionContainer = document.getElementById('action-container');
-            const statusMessageDiv = document.getElementById('status-message');
+            const startButton = document.getElementById('start-ar-button');
+            const modelViewer = document.getElementById('pizza-ar-viewer');
+            const container = document.getElementById('action-container');
             const loadingOverlay = document.getElementById('loading-overlay');
+            const statusMessage = document.getElementById('status-message');
             const loadingText = document.getElementById('loading-text');
 
-            let arSessionActive = false;
+            function showLoading(message = 'Carregando Realidade Aumentada...') {
+                loadingText.textContent = message;
+                loadingOverlay.style.display = 'flex';
+            }
+
+            function hideLoading() {
+                loadingOverlay.style.display = 'none';
+            }
 
             function displayStatus(message, isError = false) {
-                if (statusMessageDiv) {
-                    statusMessageDiv.textContent = message;
-                    statusMessageDiv.style.color = isError ? 'red' : 'var(--text-color)';
-                    statusMessageDiv.style.fontWeight = isError ? 'bold' : 'normal';
-                }
-                console.log(`[STATUS]: ${message}`);
+                statusMessage.textContent = message;
+                statusMessage.style.color = isError ? 'red' : 'var(--text-color)';
+                statusMessage.style.fontWeight = isError ? 'bold' : 'normal';
             }
 
-            function showLoadingOverlay(message = 'Carregando Realidade Aumentada...') {
-                if (loadingOverlay) {
-                    loadingText.textContent = message;
-                    loadingOverlay.style.display = 'flex';
-                }
+            function resetToStart(message = '') {
+                container.style.display = 'flex';
+                startButton.disabled = false;
+                displayStatus(message);
+                hideLoading();
             }
-
-            function hideLoadingOverlay() {
-                if (loadingOverlay) {
-                    loadingOverlay.style.display = 'none';
-                }
-            }
-
-            function returnToHomeScreen(message = "") {
-                modelViewerElement.style.display = 'none';
-                actionContainer.style.display = 'flex';
-                startArButton.disabled = false;
-                startArButton.style.opacity = '1';
-                displayStatus(message); 
-                hideLoadingOverlay();
-                arSessionActive = false;
-                console.log("Retornou à tela inicial.");
-            }
-
-            setTimeout(() => {
-                if (modelViewerElement.canActivateAR) {
-                    if (statusMessageDiv) {
-                        statusMessageDiv.style.display = 'none'; 
-                    }
-                    console.log("Dispositivo compatível com AR.");
-                } else {
-                    displayStatus("Seu dispositivo não suporta Realidade Aumentada (AR).", true);
-                    startArButton.disabled = true;
-                    startArButton.textContent = "AR Não Suportado";
-                    startArButton.style.opacity = '0.5';
-                    console.log("Dispositivo NÃO compatível com AR.");
-                }
-            }, 500);
-
-            startArButton.addEventListener('click', async () => {
-                startArButton.disabled = true;
-                startArButton.style.opacity = '0.7';
-                actionContainer.style.display = 'none';
-                showLoadingOverlay();
-
-                modelViewerElement.style.display = 'block';
-
-                try {
-                    console.log("Tentando ativar AR...");
-                    await modelViewerElement.activateAR();
-                    arSessionActive = true;
-                    hideLoadingOverlay();
-                    console.log("Sessão AR ativada com sucesso.");
-
-                } catch (error) {
-                    console.error("Erro ao ativar AR:", error);
-                    let errorMessage = "Falha ao iniciar AR. Tente novamente.";
-                    if (error.name === "NotSupportedError") {
-                        errorMessage = "Seu dispositivo ou navegador não suporta Realidade Aumentada.";
-                    } else if (error.message.includes("permission")) {
-                        errorMessage = "É necessária permissão de câmera para usar AR.";
-                    } else if (error.message.includes("timeout")) {
-                        errorMessage = "Tempo esgotado ao carregar o modelo ou iniciar AR. Verifique sua conexão.";
-                    }
-                    returnToHomeScreen(errorMessage);
-                }
-            });
-
-            modelViewerElement.addEventListener('ar-status', (event) => {
-                console.log('Evento ar-status:', event.detail.status);
-                if (event.detail.status === 'not-presenting' && arSessionActive) {
-                    console.log("Sessão AR encerrada pelo usuário.");
-                    returnToHomeScreen("");
-                } else if (event.detail.status === 'failed' && arSessionActive) {
-                    console.error("Sessão AR falhou durante a execução.");
-                    returnToHomeScreen("Sessão AR falhou. Tente novamente.");
-                }
-            });
 
             document.addEventListener('visibilitychange', () => {
-                if (document.visibilityState === 'visible' && arSessionActive) {
-                    console.log("Página tornou-se visível. Verificando estado da sessão AR.");
-                    if (!modelViewerElement.isPresenting) {
-                        returnToHomeScreen("");
-                    }
+                if (document.visibilityState === 'visible') {
+                    resetToStart();
                 }
             });
 
-            modelViewerElement.addEventListener('load', () => {
-                console.log("Modelo 3D carregado com sucesso pelo model-viewer.");
-            });
-            modelViewerElement.addEventListener('error', (event) => {
-                console.error("Erro no carregamento do modelo 3D:", event.detail);
+            startButton.addEventListener('click', async () => {
+                startButton.disabled = true;
+                container.style.display = 'none';
+                showLoading();
+
+                try {
+                    if (!modelViewer.loaded) {
+                        await new Promise((resolve, reject) => {
+                            modelViewer.addEventListener('load', resolve, { once: true });
+                            modelViewer.addEventListener('error', reject, { once: true });
+                        });
+                    }
+                    hideLoading();
+                    await modelViewer.activateAR();
+                } catch (err) {
+                    console.error("Erro ao ativar AR:", err);
+                    resetToStart("Falha ao iniciar AR. Tente novamente.");
+                }
             });
         });
     </script>
