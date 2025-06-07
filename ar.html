@@ -84,6 +84,7 @@
             left: 0;
             z-index: 1;
             display: none;
+            background-color: transparent;
         }
 
         #exit-button {
@@ -122,10 +123,12 @@
         ar-scale="fixed"
         shadow-intensity="1"
         exposure="1.0"
-        disable-zoom
         camera-controls="false"
         interaction-prompt="none"
-        style="background-color: transparent; visibility: hidden;">
+        disable-zoom
+        disable-pan
+        disable-tap
+        style="display: none;">
         <div slot="ar-button" style="display: none;"></div>
     </model-viewer>
 
@@ -140,7 +143,6 @@
             function resetToStart() {
                 modelViewer.pause();
                 modelViewer.style.display = 'none';
-                modelViewer.style.visibility = 'hidden';
                 container.style.display = 'flex';
                 startButton.disabled = false;
                 exitButton.style.display = 'none';
@@ -156,7 +158,6 @@
                 startButton.disabled = true;
                 container.style.display = 'none';
                 modelViewer.style.display = 'block';
-                modelViewer.style.visibility = 'hidden';
                 exitButton.style.display = 'block';
 
                 try {
