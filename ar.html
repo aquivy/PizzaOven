@@ -43,7 +43,7 @@
             background-color: #fff;
             border-radius: var(--border-radius);
             box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            gap: 15px;
+            gap: 15px; /* Espaçamento entre os elementos filhos */
         }
 
         #start-ar-button {
@@ -76,18 +76,16 @@
             transform: scale(0.98);
         }
 
-        #status-text { /* Reintroduzindo o status text */
+        #status-message {
             font-size: 15px;
             color: var(--text-color);
-            min-height: 40px; /* Um pouco menor, pois não terá dicas extensas */
+            min-height: 20px; /* Reduz a altura mínima se necessário */
             line-height: 1.5;
             padding: 10px;
             width: 100%;
-            text-align: left;
+            text-align: center;
             box-sizing: border-box;
             border-radius: 5px;
-            background-color: #f9f9f9;
-            border: 1px solid #eee;
         }
 
         model-viewer#pizza-ar-viewer {
@@ -97,10 +95,9 @@
             top: 0;
             left: 0;
             z-index: 1;
-            display: none;
+            display: none; /* Inicia escondido, JS controla a visibilidade */
         }
 
-        /* Loading indicator */
         #loading-overlay {
             position: fixed;
             top: 0;
@@ -136,10 +133,12 @@
 <body>
     <div id="action-container">
         <button id="start-ar-button">Visualizar em Realidade Aumentada</button>
-        <div id="status-text">Verificando suporte AR...</div> </div>
+        <div id="status-message"></div>
+    </div>
 
-    <div id="loading-overlay"> <div class="spinner"></div>
-        <div id="loading-message">Carregando modelo 3D...</div>
+    <div id="loading-overlay">
+        <div class="spinner"></div>
+        <div id="loading-text">Carregando Realidade Aumentada...</div>
     </div>
 
     <model-viewer
@@ -149,101 +148,138 @@
         ar
         ar-modes="scene-viewer quick-look webxr" ar-placement="floor"
         ar-scale="fixed"
-        camera-controls
+        scale="12 12 12"
         autoplay
         shadow-intensity="1"
         exposure="1.0"
+        camera-controls
         disable-zoom
-        scale="12 12 12"
         style="background-color: transparent">
         <div slot="ar-button" style="display: none;"></div>
     </model-viewer>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            const startButton = document.getElementById('start-ar-button');
-            const modelViewer = document.getElementById('pizza-ar-viewer');
-            const container = document.getElementById('action-container');
-            const statusTextDiv = document.getElementById('status-text'); // Novo
-            const loadingOverlay = document.getElementById('loading-overlay'); // Novo
-            const loadingMessage = document.getElementById('loading-message'); // Novo
+            const startArButton = document.getElementById('start-ar-button');
+            const modelViewerElement = document.getElementById('pizza-ar-viewer');
+            const actionContainer = document.getElementById('action-container');
+            const statusMessageDiv = document.getElementById('status-message');
+            const loadingOverlay = document.getElementById('loading-overlay');
+            const loadingText = document.getElementById('loading-text');
 
-            let arLaunched = false;
+            let arSessionActive = false;
 
-            function updateStatus(htmlMessage, isError = false) {
-                if (statusTextDiv) {
-                    statusTextDiv.innerHTML = htmlMessage;
-                    statusTextDiv.style.color = isError ? 'red' : 'var(--text-color)';
-                    statusTextDiv.style.fontWeight = isError ? 'bold' : 'normal';
+            function displayStatus(message, isError = false) {
+                if (statusMessageDiv) {
+                    statusMessageDiv.textContent = message;
+                    statusMessageDiv.style.color = isError ? 'red' : 'var(--text-color)';
+                    statusMessageDiv.style.fontWeight = isError ? 'bold' : 'normal';
                 }
-                console.log(`STATUS: ${htmlMessage.replace(/<[^>]*>?/gm, ' ')}`);
+                console.log(`[STATUS]: ${message}`);
             }
 
-            function showLoading(message = 'Carregando...') {
+            function showLoadingOverlay(message = 'Carregando Realidade Aumentada...') {
                 if (loadingOverlay) {
-                    loadingMessage.textContent = message;
+                    loadingText.textContent = message;
                     loadingOverlay.style.display = 'flex';
                 }
             }
 
-            function hideLoading() {
+            function hideLoadingOverlay() {
                 if (loadingOverlay) {
                     loadingOverlay.style.display = 'none';
                 }
             }
 
-            function resetToStart(message = "Clique no botão para iniciar a Realidade Aumentada.") {
-                modelViewer.style.display = 'none';
-                container.style.display = 'flex';
-                startButton.disabled = false;
-                startButton.style.opacity = '1';
-                updateStatus(message); // Atualiza status
-                hideLoading(); // Esconde carregamento
-                arLaunched = false;
+            function returnToHomeScreen(message = "") {
+                modelViewerElement.style.display = 'none';
+                actionContainer.style.display = 'flex';
+                startArButton.disabled = false;
+                startArButton.style.opacity = '1';
+                displayStatus(message); 
+                hideLoadingOverlay();
+                arSessionActive = false;
+                console.log("Retornou à tela inicial.");
             }
 
-            // Verifica compatibilidade AR ao carregar a página
-            setTimeout(async () => {
-                if (modelViewer.canActivateAR) {
-                    updateStatus("Seu dispositivo é compatível com Realidade Aumentada!");
-                    startButton.disabled = false;
-                } else {
-                    updateStatus("Seu dispositivo não suporta Realidade Aumentada (AR).", true);
-                    startButton.disabled = true;
-                    startButton.textContent = "AR Não Suportado";
-                }
-            }, 500); // Pequeno atraso para garantir que model-viewer esteja pronto
+            // --- Gerenciamento de Eventos ---
 
-            document.addEventListener('visibilitychange', () => {
-                if (document.visibilityState === 'visible' && arLaunched) {
-                    console.log("Sessão AR finalizada ou usuário retornou.");
-                    resetToStart("Sessão AR encerrada. Clique para iniciar novamente.");
+            // 1. Verificar suporte a AR ao carregar a página
+            setTimeout(() => {
+                if (modelViewerElement.canActivateAR) {
+                    // MODIFICADO: Esconde a div de status em caso de sucesso
+                    if (statusMessageDiv) {
+                        statusMessageDiv.style.display = 'none'; 
+                    }
+                    console.log("Dispositivo compatível com AR.");
+                } else {
+                    displayStatus("Seu dispositivo não suporta Realidade Aumentada (AR).", true);
+                    startArButton.disabled = true;
+                    startArButton.textContent = "AR Não Suportado";
+                    startArButton.style.opacity = '0.5';
+                    console.log("Dispositivo NÃO compatível com AR.");
+                }
+            }, 500);
+
+            // 2. Comportamento do botão "Visualizar em Realidade Aumentada"
+            startArButton.addEventListener('click', async () => {
+                startArButton.disabled = true;
+                startArButton.style.opacity = '0.7';
+                actionContainer.style.display = 'none';
+                showLoadingOverlay();
+
+                modelViewerElement.style.display = 'block';
+
+                try {
+                    console.log("Tentando ativar AR...");
+                    await modelViewerElement.activateAR();
+                    arSessionActive = true;
+                    hideLoadingOverlay();
+                    console.log("Sessão AR ativada com sucesso.");
+
+                } catch (error) {
+                    console.error("Erro ao ativar AR:", error);
+                    let errorMessage = "Falha ao iniciar AR. Tente novamente.";
+                    if (error.name === "NotSupportedError") {
+                        errorMessage = "Seu dispositivo ou navegador não suporta Realidade Aumentada.";
+                    } else if (error.message.includes("permission")) {
+                        errorMessage = "É necessária permissão de câmera para usar AR.";
+                    } else if (error.message.includes("timeout")) {
+                        errorMessage = "Tempo esgotado ao carregar o modelo ou iniciar AR. Verifique sua conexão.";
+                    }
+                    returnToHomeScreen(errorMessage);
                 }
             });
 
-            startButton.addEventListener('click', async () => {
-                startButton.disabled = true;
-                container.style.display = 'none';
-                showLoading("Preparando Realidade Aumentada..."); // Mostra overlay de carregamento
-
-                // Garante que o model-viewer esteja visível para ativar AR
-                modelViewer.style.display = 'block';
-
-                try {
-                    // O activateAR já gerencia o carregamento do modelo, se necessário
-                    await modelViewer.activateAR();
-                    arLaunched = true;
-                    hideLoading(); // Esconde carregamento quando AR está ativa
-                } catch (err) {
-                    console.error("Erro ao ativar AR:", err);
-                    let errorMessage = "Erro ao iniciar AR. Tente novamente.";
-                    if (err.name === "NotSupportedError") {
-                        errorMessage = "Seu dispositivo ou navegador não suporta Realidade Aumentada.";
-                    } else if (err.message.includes("permission")) {
-                        errorMessage = "Permissão de câmera negada. Conceda permissão para usar AR.";
-                    }
-                    resetToStart(errorMessage);
+            // 3. Detectar quando o usuário sai da sessão AR
+            modelViewerElement.addEventListener('ar-status', (event) => {
+                console.log('Evento ar-status:', event.detail.status);
+                if (event.detail.status === 'not-presenting' && arSessionActive) {
+                    console.log("Sessão AR encerrada pelo usuário.");
+                    // Ao retornar, a mensagem de status (agora oculta) não aparecerá
+                    returnToHomeScreen("");
+                } else if (event.detail.status === 'failed' && arSessionActive) {
+                    console.error("Sessão AR falhou durante a execução.");
+                    returnToHomeScreen("Sessão AR falhou. Tente novamente.");
                 }
+            });
+
+            // 4. Detectar quando o usuário troca de aba ou minimiza o navegador
+            document.addEventListener('visibilitychange', () => {
+                if (document.visibilityState === 'visible' && arSessionActive) {
+                    console.log("Página tornou-se visível. Verificando estado da sessão AR.");
+                    if (!modelViewerElement.isPresenting) {
+                        returnToHomeScreen("");
+                    }
+                }
+            });
+
+            // Opcional: Log de carregamento do modelo para depuração
+            modelViewerElement.addEventListener('load', () => {
+                console.log("Modelo 3D carregado com sucesso pelo model-viewer.");
+            });
+            modelViewerElement.addEventListener('error', (event) => {
+                console.error("Erro no carregamento do modelo 3D:", event.detail);
             });
         });
     </script>
