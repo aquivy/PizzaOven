@@ -4,121 +4,293 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Forno de Pizza - Realidade Aumentada</title>
-    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js"></script>
+    <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
     <style>
+        :root {
+            --primary-color: #007aff;
+            --text-color: #333;
+            --background-color: #f4f6f8;
+            --button-shadow: 0 2px 6px rgba(0,0,0,0.2);
+            --border-radius: 10px;
+            --padding-base: 20px;
+        }
+
         body {
             margin: 0;
-            font-family: sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             min-height: 100vh;
-            background-color: #f4f6f8;
-            padding: 20px;
+            background-color: var(--background-color);
+            padding: var(--padding-base);
             box-sizing: border-box;
             text-align: center;
             overflow: hidden;
         }
+
         #action-container {
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             width: 100%;
-            max-width: 480px;
+            max-width: 500px;
+            position: relative;
+            z-index: 10;
+            padding: var(--padding-base);
+            background-color: #fff;
+            border-radius: var(--border-radius);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            gap: 15px; /* Espaçamento entre os elementos filhos */
         }
+
         #start-ar-button {
-            background-color: #007aff;
+            background-color: var(--primary-color);
             color: white;
             border: none;
             padding: 18px 35px;
             font-size: 18px;
             font-weight: 500;
-            border-radius: 10px;
+            border-radius: var(--border-radius);
             cursor: pointer;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+            box-shadow: var(--button-shadow);
+            transition: background-color 0.3s ease, transform 0.1s ease;
+            width: 100%;
+            max-width: 300px;
+        }
+
+        #start-ar-button:hover {
+            background-color: #005bb5;
+        }
+
+        #start-ar-button:disabled {
+            background-color: #cccccc;
+            cursor: default;
+            opacity: 0.7;
+            box-shadow: none;
+        }
+
+        #start-ar-button:active {
+            transform: scale(0.98);
+        }
+
+        /* Opcional: Estilo para o texto de status, se ele ainda precisar ser usado para erros */
+        #status-message {
+            font-size: 15px;
+            color: var(--text-color);
+            min-height: 40px; /* Garante que o espaço não mude muito */
+            line-height: 1.5;
+            padding: 10px;
+            width: 100%;
+            text-align: center; /* Centraliza o texto */
+            box-sizing: border-box;
+            border-radius: 5px;
+            /* background-color: #f9f9f9; /* Pode remover a cor de fundo */
+            /* border: 1px solid #eee; /* Pode remover a borda */
+        }
+
+        model-viewer#pizza-ar-viewer {
+            width: 100vw;
+            height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 1;
+            display: none; /* Inicia escondido, JS controla a visibilidade */
+        }
+
+        /* Loading indicator para quando o AR estiver carregando */
+        #loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: none; /* Inicia escondido */
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 20px;
+            z-index: 999;
+        }
+
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 4px solid #fff;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
             margin-bottom: 15px;
         }
-        #status-text {
-            font-size: 15px;
-            color: #333;
-            min-height: 60px;
-            line-height: 1.5;
-            border: 1px dashed #aaa;
-            padding: 10px;
-            background-color: #fff;
-            border-radius: 5px;
-            text-align: left;
-        }
-        model-viewer#pizza-ar-viewer {
-            display: none;
-            position: fixed;
-            bottom: 5px;
-            right: 5px;
-            width: 50px;
-            height: 50px;
-            z-index: 1;
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
     </style>
 </head>
 <body>
     <div id="action-container">
-        <button id="start-ar-button">Carregar Realidade Aumentada</button>
-        <div id="status-text">Clique no botão para iniciar AR.</div>
+        <button id="start-ar-button">Visualizar Forno de Pizza em AR</button>
+        <div id="status-message"></div> </div>
+
+    <div id="loading-overlay">
+        <div class="spinner"></div>
+        <div id="loading-text">Carregando Realidade Aumentada...</div>
     </div>
 
     <model-viewer
         id="pizza-ar-viewer"
-        src="pizza oven_resized.glb"
+        src="https://raw.githubusercontent.com/julianambatista/PizzaOven/main/pizza%20oven_resized.glb"
         alt="Forno de Pizza em Realidade Aumentada"
         ar
-        ar-modes="webxr scene-viewer quick-look"
-        ar-placement="floor"
+        ar-modes="scene-viewer quick-look webxr" ar-placement="floor"
         ar-scale="fixed"
+        scale="12 12 12"
         autoplay
         shadow-intensity="1"
         exposure="1.0"
-        disable-tap
-    >
+        camera-controls
+        disable-zoom
+        style="background-color: transparent">
+        <div slot="ar-button" style="display: none;"></div>
     </model-viewer>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            const startButton = document.getElementById('start-ar-button');
-            const statusText = document.getElementById('status-text');
-            const modelViewer = document.getElementById('pizza-ar-viewer');
+            const startArButton = document.getElementById('start-ar-button');
+            const modelViewerElement = document.getElementById('pizza-ar-viewer');
+            const actionContainer = document.getElementById('action-container');
+            const statusMessageDiv = document.getElementById('status-message'); // Elemento para mensagens de status/erro
+            const loadingOverlay = document.getElementById('loading-overlay');
+            const loadingText = document.getElementById('loading-text');
 
-            startButton.addEventListener('click', async () => {
-                startButton.disabled = true;
-                statusText.innerHTML = "Carregando modelo 3D...";
+            let arSessionActive = false; // Flag para rastrear se a sessão AR está ativa
 
-                modelViewer.style.display = 'block';
-
-                if (!modelViewer.loaded) {
-                    await new Promise((resolve, reject) => {
-                        const timeout = setTimeout(() => reject(new Error("Tempo excedido ao carregar modelo")), 15000);
-                        modelViewer.addEventListener('load', () => {
-                            clearTimeout(timeout);
-                            resolve();
-                        }, { once: true });
-                        modelViewer.addEventListener('error', (e) => {
-                            clearTimeout(timeout);
-                            reject(new Error("Erro ao carregar modelo"));
-                        }, { once: true });
-                    });
+            // Função para exibir mensagens de status ou erro
+            function displayStatus(message, isError = false) {
+                if (statusMessageDiv) {
+                    statusMessageDiv.textContent = message;
+                    statusMessageDiv.style.color = isError ? 'red' : 'var(--text-color)';
+                    statusMessageDiv.style.fontWeight = isError ? 'bold' : 'normal';
                 }
+                console.log(`[STATUS]: ${message}`);
+            }
 
-                statusText.innerHTML = "Iniciando realidade aumentada...";
-                await new Promise(res => setTimeout(res, 1500));
+            // Função para mostrar o overlay de carregamento
+            function showLoadingOverlay(message = 'Carregando Realidade Aumentada...') {
+                if (loadingOverlay) {
+                    loadingText.textContent = message;
+                    loadingOverlay.style.display = 'flex';
+                }
+            }
+
+            // Função para esconder o overlay de carregamento
+            function hideLoadingOverlay() {
+                if (loadingOverlay) {
+                    loadingOverlay.style.display = 'none';
+                }
+            }
+
+            // Função para retornar à tela inicial
+            function returnToHomeScreen(message = "") {
+                modelViewerElement.style.display = 'none'; // Esconde o model-viewer
+                actionContainer.style.display = 'flex'; // Mostra o container inicial
+                startArButton.disabled = false; // Habilita o botão
+                startArButton.style.opacity = '1';
+                displayStatus(message); // Limpa ou mostra mensagem de status
+                hideLoadingOverlay(); // Esconde o carregamento
+                arSessionActive = false;
+                console.log("Retornou à tela inicial.");
+            }
+
+            // --- Gerenciamento de Eventos ---
+
+            // 1. Verificar suporte a AR ao carregar a página
+            // Usamos um pequeno atraso para garantir que o model-viewer esteja totalmente inicializado
+            setTimeout(() => {
+                if (modelViewerElement.canActivateAR) {
+                    // Se compatível, o botão já tem o texto desejado e está habilitado por padrão no HTML
+                    displayStatus(''); // Limpa qualquer mensagem de status inicial
+                    console.log("Dispositivo compatível com AR.");
+                } else {
+                    displayStatus("Seu dispositivo não suporta Realidade Aumentada (AR).", true);
+                    startArButton.disabled = true;
+                    startArButton.textContent = "AR Não Suportado";
+                    startArButton.style.opacity = '0.5';
+                    console.log("Dispositivo NÃO compatível com AR.");
+                }
+            }, 500);
+
+            // 2. Comportamento do botão "Visualizar em Realidade Aumentada"
+            startArButton.addEventListener('click', async () => {
+                startArButton.disabled = true;
+                startArButton.style.opacity = '0.7';
+                actionContainer.style.display = 'none'; // Esconde o container inicial
+                showLoadingOverlay(); // Mostra o indicador de carregamento
+
+                // Garante que o model-viewer esteja visível para que o AR possa ser ativado
+                modelViewerElement.style.display = 'block';
 
                 try {
-                    await modelViewer.activateAR();
-                    statusText.innerHTML = "AR iniciado.";
-                } catch (err) {
-                    statusText.innerHTML = "Erro ao iniciar AR: " + err.message;
-                    startButton.disabled = false;
+                    console.log("Tentando ativar AR...");
+                    await modelViewerElement.activateAR();
+                    arSessionActive = true;
+                    hideLoadingOverlay(); // Esconde o carregamento quando o AR é ativado com sucesso
+                    console.log("Sessão AR ativada com sucesso.");
+
+                } catch (error) {
+                    console.error("Erro ao ativar AR:", error);
+                    let errorMessage = "Falha ao iniciar AR. Tente novamente.";
+                    if (error.name === "NotSupportedError") {
+                        errorMessage = "Seu dispositivo ou navegador não suporta Realidade Aumentada.";
+                    } else if (error.message.includes("permission")) {
+                        errorMessage = "É necessária permissão de câmera para usar AR.";
+                    } else if (error.message.includes("timeout")) {
+                        errorMessage = "Tempo esgotado ao carregar o modelo ou iniciar AR. Verifique sua conexão.";
+                    }
+                    returnToHomeScreen(errorMessage); // Retorna à tela inicial com mensagem de erro
                 }
+            });
+
+            // 3. Detectar quando o usuário sai da sessão AR (clicando no 'X' ou saindo do app AR)
+            modelViewerElement.addEventListener('ar-status', (event) => {
+                console.log('Evento ar-status:', event.detail.status);
+                // 'not-presenting' indica que a sessão AR foi encerrada
+                if (event.detail.status === 'not-presenting' && arSessionActive) {
+                    console.log("Sessão AR encerrada pelo usuário.");
+                    returnToHomeScreen("Sessão AR encerrada. Clique para visualizar novamente.");
+                } else if (event.detail.status === 'failed' && arSessionActive) {
+                     console.error("Sessão AR falhou durante a execução.");
+                     returnToHomeScreen("Sessão AR falhou. Tente novamente.");
+                }
+            });
+
+            // 4. Detectar quando o usuário troca de aba ou minimiza o navegador (também encerra a sessão AR)
+            document.addEventListener('visibilitychange', () => {
+                if (document.visibilityState === 'visible' && arSessionActive) {
+                    // Este evento pode ser disparado por vários motivos, mas se a sessão AR estava ativa e o usuário retornou
+                    // e o ar-status 'not-presenting' não foi capturado (ex: o app AR foi fechado completamente),
+                    // esta é uma boa alternativa para resetar.
+                    console.log("Página tornou-se visível. Verificando estado da sessão AR.");
+                    if (!modelViewerElement.isPresenting) { // Verifica se model-viewer ainda está em modo de apresentação AR
+                        returnToHomeScreen("Sessão AR encerrada. Clique para visualizar novamente.");
+                    }
+                }
+            });
+
+            // Opcional: Log de carregamento do modelo para depuração
+            modelViewerElement.addEventListener('load', () => {
+                console.log("Modelo 3D carregado com sucesso pelo model-viewer.");
+            });
+            modelViewerElement.addEventListener('error', (event) => {
+                console.error("Erro no carregamento do modelo 3D:", event.detail);
+                // Este erro geralmente é capturado pelo catch no activateAR, mas é útil para depuração
             });
         });
     </script>
