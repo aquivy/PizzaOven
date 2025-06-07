@@ -85,12 +85,30 @@
             z-index: 1;
             display: none;
         }
+
+        #exit-button {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            background-color: rgba(0, 0, 0, 0.5);
+            color: white;
+            border: none;
+            font-size: 24px;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            cursor: pointer;
+            display: none;
+        }
     </style>
 </head>
 <body>
     <div id="action-container">
         <button id="start-ar-button">Visualizar em Realidade Aumentada</button>
     </div>
+
+    <button id="exit-button">&times;</button>
 
     <model-viewer
         id="pizza-ar-viewer"
@@ -117,6 +135,7 @@
             const startButton = document.getElementById('start-ar-button');
             const modelViewer = document.getElementById('pizza-ar-viewer');
             const container = document.getElementById('action-container');
+            const exitButton = document.getElementById('exit-button');
             let arLaunched = false;
 
             function resetToStart() {
@@ -124,6 +143,7 @@
                 modelViewer.style.visibility = 'hidden';
                 container.style.display = 'flex';
                 startButton.disabled = false;
+                exitButton.style.display = 'none';
             }
 
             document.addEventListener('visibilitychange', () => {
@@ -137,6 +157,7 @@
                 container.style.display = 'none';
                 modelViewer.style.display = 'block';
                 modelViewer.style.visibility = 'hidden';
+                exitButton.style.display = 'block';
 
                 try {
                     await modelViewer.activateAR();
@@ -145,6 +166,10 @@
                     console.error("Erro ao ativar AR:", err);
                     resetToStart();
                 }
+            });
+
+            exitButton.addEventListener('click', () => {
+                resetToStart();
             });
         });
     </script>
