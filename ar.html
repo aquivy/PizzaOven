@@ -115,17 +115,16 @@
         src="https://raw.githubusercontent.com/julianambatista/PizzaOven/main/pizza%20oven_resized.glb"
         alt="Forno de Pizza em Realidade Aumentada"
         ar
+        autoplay
+        animation-name="*"
         ar-modes="webxr scene-viewer quick-look"
         ar-placement="floor"
         ar-scale="fixed"
         shadow-intensity="1"
         exposure="1.0"
         disable-zoom
-        disable-pan
-        disable-tap
         camera-controls="false"
         interaction-prompt="none"
-        ios-src=""
         style="background-color: transparent; visibility: hidden;">
         <div slot="ar-button" style="display: none;"></div>
     </model-viewer>
@@ -139,6 +138,7 @@
             let arLaunched = false;
 
             function resetToStart() {
+                modelViewer.pause();
                 modelViewer.style.display = 'none';
                 modelViewer.style.visibility = 'hidden';
                 container.style.display = 'flex';
