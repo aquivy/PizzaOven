@@ -133,24 +133,25 @@
 </head>
 <body>
     <div id="action-container">
-        <button id="start-ar-button">Aponte a câmera para uma superfície plana e clique aqui para visualizar a demonstração em realidade aumentada.</button>
-        <div id="status-message"></div>
+        <button id="start-ar-button">Ver em Realidade Aumentada</button>
+        <div id="status-message">Aponte a câmera para uma superfície plana para visualizar o forno.</div>
     </div>
 
     <div id="loading-overlay">
         <div class="spinner"></div>
-        <div id="loading-text">Carregando Realidade Aumentada...</div>
+        <div id="loading-text">Carregando...</div>
     </div>
 
     <model-viewer
         id="pizza-ar-viewer"
-        src="https://raw.githubusercontent.com/julianambatista/PizzaOven/main/pizza%20oven_resized.glb"
+        src="https://raw.githubusercontent.com/julianambatista/PizzaOven/main/pizza_oven_resized.glb"
+        ios-src="https://raw.githubusercontent.com/julianambatista/PizzaOven/main/pizza_oven_resized.usdz"
         alt="Forno de Pizza em Realidade Aumentada"
         ar
-        autoplay
-        animation-name="*"
         ar-modes="webxr scene-viewer quick-look"
         ar-placement="floor"
+        autoplay
+        animation-name="*"
         environment-image="neutral"
         shadow-intensity="1"
         exposure="1.0"
@@ -174,6 +175,21 @@
 
             let arActive = false;
 
+            // ---- MELHORIA: VERIFICA SE O DISPOSITIVO SUPORTA AR ----
+            (async () => {
+                try {
+                    const isArSupported = await modelViewer.canActivateAR();
+                    if (!isArSupported) {
+                        startButton.disabled = true;
+                        displayStatus("Seu dispositivo não suporta Realidade Aumentada.", true);
+                    }
+                } catch (err) {
+                    console.error("Erro ao verificar suporte a AR:", err);
+                    startButton.disabled = true;
+                    displayStatus("Não foi possível verificar o suporte a AR.", true);
+                }
+            })();
+
             function showLoading(message = 'Carregando Realidade Aumentada...') {
                 loadingText.textContent = message;
                 loadingOverlay.style.display = 'flex';
@@ -185,11 +201,11 @@
 
             function displayStatus(message, isError = false) {
                 statusMessage.textContent = message;
-                statusMessage.style.color = isError ? 'red' : 'var(--text-color)';
+                statusMessage.style.color = isError ? '#d93025' : 'var(--text-color)';
                 statusMessage.style.fontWeight = isError ? 'bold' : 'normal';
             }
 
-            function resetToStart(message = '') {
+            function resetToStart(message = 'Aponte a câmera para uma superfície plana para visualizar o forno.') {
                 arActive = false;
                 container.style.display = 'flex';
                 startButton.disabled = false;
@@ -197,33 +213,40 @@
                 hideLoading();
             }
 
+            // Ouve por mudanças de visibilidade (ex: usuário troca de aba) para resetar a UI
             document.addEventListener('visibilitychange', () => {
                 if (document.visibilityState === 'visible' && arActive) {
                     resetToStart();
                 }
             });
 
+            // Ouve o status do model-viewer para saber quando o usuário sai do modo AR
             modelViewer.addEventListener('ar-status', (event) => {
                 if (event.detail.status === 'not-presenting' && arActive) {
                     resetToStart();
                 }
             });
 
+            // Evento de clique no nosso botão principal
             startButton.addEventListener('click', async () => {
                 startButton.disabled = true;
                 container.style.display = 'none';
                 showLoading();
 
                 try {
+                    // Espera o modelo carregar, se ainda não estiver carregado
                     if (!modelViewer.loaded) {
                         await new Promise((resolve, reject) => {
                             modelViewer.addEventListener('load', resolve, { once: true });
-                            modelViewer.addEventListener('error', reject, { once: true });
+                            modelViewer.addEventListener('error', (e) => reject(new Error(e.detail)), { once: true });
                         });
                     }
+                    
+                    // Esconde o loading e ativa o modo AR
                     hideLoading();
                     arActive = true;
                     await modelViewer.activateAR();
+
                 } catch (err) {
                     console.error("Erro ao ativar AR:", err);
                     resetToStart("Falha ao iniciar AR. Tente novamente.");
