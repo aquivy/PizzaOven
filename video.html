@@ -1,19 +1,22 @@
-<model-viewer
-    id="viewer"
-    src="https://raw.githubusercontent.com/julianambatista/PizzaOven/main/pizza_oven_resized.glb"
-    ios-src="https://raw.githubusercontent.com/julianambatista/PizzaOven/main/pizza_oven_resized.usdz"
-    alt="Visualização do Forno de Pizza"
-    ar
-    camera-controls
-    autoplay
-    animation-name="*"
-    disable-pan
-    disable-zoom
-    interaction-prompt="none"
-    environment-image="neutral"
-    exposure="1.0"
-    shadow-intensity="1"
-    camera-orbit="0deg 80deg 6m"
-    min-camera-orbit="0deg 80deg 6m"
-    max-camera-orbit="0deg 80deg 6m">
-</model-viewer>
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Teste Mínimo do Modelo</title>
+    <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+</head>
+<body>
+
+    <h1>Teste do Forno de Pizza</h1>
+
+    <model-viewer
+        src="https://raw.githubusercontent.com/julianambatista/PizzaOven/main/pizza_oven_resized.glb"
+        ios-src="https://raw.githubusercontent.com/julianambatista/PizzaOven/main/pizza_oven_resized.usdz"
+        alt="Visualização do Forno de Pizza"
+        ar
+        camera-controls
+        style="width: 80vw; height: 60vh; border: 1px solid #ccc;">
+    </model-viewer>
+
+</body>
+</html>
