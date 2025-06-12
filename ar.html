@@ -3,79 +3,233 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AR Simples - Forno de Pizza</title>
-
+    <title>Forno de Pizza - Realidade Aumentada</title>
     <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
-
     <style>
+        :root {
+            --primary-color: #007aff;
+            --text-color: #333;
+            --background-color: #f4f6f8;
+            --button-shadow: 0 2px 6px rgba(0,0,0,0.2);
+            --border-radius: 10px;
+            --padding-base: 20px;
+        }
+
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             min-height: 100vh;
-            background-color: #f0f2f5;
-            padding: 20px;
+            background-color: var(--background-color);
+            padding: var(--padding-base);
             box-sizing: border-box;
-            color: #333;
-        }
-
-        #ar-container {
             text-align: center;
-            background-color: #ffffff;
-            padding: 25px;
-            border-radius: 15px;
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
-            max-width: 600px; /* Limita a largura em telas grandes */
+            overflow: hidden;
+        }
+
+        #action-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
             width: 100%;
+            max-width: 500px;
+            position: relative;
+            z-index: 10;
+            padding: var(--padding-base);
+            background-color: #fff;
+            border-radius: var(--border-radius);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            gap: 15px;
         }
 
-        h1 {
-            margin-top: 0;
-            font-size: 24px;
-            color: #1c1e21;
-        }
-
-        p {
-            font-size: 16px;
-            line-height: 1.6;
-            color: #606770;
-            margin-bottom: 20px;
-        }
-
-        model-viewer {
+        #start-ar-button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 18px 35px;
+            font-size: 18px;
+            font-weight: 500;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            box-shadow: var(--button-shadow);
+            transition: background-color 0.3s ease, transform 0.1s ease;
             width: 100%;
-            height: 450px;
-            border-radius: 10px;
-            border: 1px solid #ddd;
-            background-color: #fafafa;
+            max-width: 300px;
+        }
+
+        #start-ar-button:hover {
+            background-color: #005bb5;
+        }
+
+        #start-ar-button:disabled {
+            background-color: #cccccc;
+            cursor: default;
+            opacity: 0.7;
+            box-shadow: none;
+        }
+
+        #start-ar-button:active {
+            transform: scale(0.98);
+        }
+
+        #status-message {
+            font-size: 15px;
+            color: var(--text-color);
+            min-height: 20px;
+            line-height: 1.5;
+            padding: 10px;
+            width: 100%;
+            text-align: center;
+            box-sizing: border-box;
+            border-radius: 5px;
+        }
+
+        #loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 20px;
+            z-index: 999;
+        }
+
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 4px solid #fff;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin-bottom: 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        model-viewer#pizza-ar-viewer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            opacity: 0;
+            pointer-events: none;
+            z-index: -1;
         }
     </style>
 </head>
 <body>
-
-    <div id="ar-container">
-        <h1>Forno de Pizza 3D / AR</h1>
-        <p>
-            Interaja com o modelo 3D abaixo. Se seu dispositivo for compatível,
-            o <strong>botão de Realidade Aumentada</strong> aparecerá no canto inferior direito.
-        </p>
-
-        <model-viewer
-            src="https://raw.githubusercontent.com/julianambatista/PizzaOven/main/pizza_oven_resized.glb"
-            ios-src="https://raw.githubusercontent.com/julianambatista/PizzaOven/main/pizza_oven_resized.usdz"
-            alt="Modelo 3D de um forno de pizza"
-            ar
-            ar-modes="webxr scene-viewer quick-look"
-            camera-controls
-            autoplay
-            environment-image="neutral"
-            shadow-intensity="1">
-        </model-viewer>
-
+    <div id="action-container">
+        <button id="start-ar-button">Aponte a câmera para uma superfície plana e clique aqui para visualizar a demonstração em realidade aumentada.</button>
+        <div id="status-message"></div>
     </div>
 
+    <div id="loading-overlay">
+        <div class="spinner"></div>
+        <div id="loading-text">Carregando Realidade Aumentada...</div>
+    </div>
+
+    <model-viewer
+        id="pizza-ar-viewer"
+        src="https://raw.githubusercontent.com/julianambatista/PizzaOven/main/forno.glb"
+        alt="Forno de Pizza em Realidade Aumentada"
+        ar
+        autoplay
+        animation-name="*"
+        ar-modes="webxr scene-viewer quick-look"
+        ar-placement="floor"
+        environment-image="neutral"
+        shadow-intensity="1"
+        exposure="1.0"
+        disable-zoom
+        disable-pan
+        disable-tap
+        camera-controls="false"
+        interaction-prompt="none"
+        scale="1 1 1">
+        <div slot="ar-button" style="display: none;"></div>
+    </model-viewer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const startButton = document.getElementById('start-ar-button');
+            const modelViewer = document.getElementById('pizza-ar-viewer');
+            const container = document.getElementById('action-container');
+            const loadingOverlay = document.getElementById('loading-overlay');
+            const statusMessage = document.getElementById('status-message');
+            const loadingText = document.getElementById('loading-text');
+
+            let arActive = false;
+
+            function showLoading(message = 'Carregando Realidade Aumentada...') {
+                loadingText.textContent = message;
+                loadingOverlay.style.display = 'flex';
+            }
+
+            function hideLoading() {
+                loadingOverlay.style.display = 'none';
+            }
+
+            function displayStatus(message, isError = false) {
+                statusMessage.textContent = message;
+                statusMessage.style.color = isError ? 'red' : 'var(--text-color)';
+                statusMessage.style.fontWeight = isError ? 'bold' : 'normal';
+            }
+
+            function resetToStart(message = '') {
+                arActive = false;
+                container.style.display = 'flex';
+                startButton.disabled = false;
+                displayStatus(message);
+                hideLoading();
+            }
+
+            document.addEventListener('visibilitychange', () => {
+                if (document.visibilityState === 'visible' && arActive) {
+                    resetToStart();
+                }
+            });
+
+            modelViewer.addEventListener('ar-status', (event) => {
+                if (event.detail.status === 'not-presenting' && arActive) {
+                    resetToStart();
+                }
+            });
+
+            startButton.addEventListener('click', async () => {
+                startButton.disabled = true;
+                container.style.display = 'none';
+                showLoading();
+
+                try {
+                    if (!modelViewer.loaded) {
+                        await new Promise((resolve, reject) => {
+                            modelViewer.addEventListener('load', resolve, { once: true });
+                            modelViewer.addEventListener('error', reject, { once: true });
+                        });
+                    }
+                    hideLoading();
+                    arActive = true;
+                    await modelViewer.activateAR();
+                } catch (err) {
+                    console.error("Erro ao ativar AR:", err);
+                    resetToStart("Falha ao iniciar AR. Tente novamente.");
+                }
+            });
+        });
+    </script>
 </body>
 </html>
