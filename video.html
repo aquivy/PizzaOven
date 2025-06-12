@@ -2,21 +2,136 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <title>Teste Mínimo do Modelo</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Forno de Pizza - Visualização 3D</title>
     <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #007aff;
+            --text-color: #333;
+            --background-color: #f4f6f8;
+            --button-shadow: 0 2px 6px rgba(0,0,0,0.2);
+            --border-radius: 10px;
+            --padding-base: 20px;
+        }
+
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background-color: var(--background-color);
+            padding: var(--padding-base);
+            box-sizing: border-box;
+            text-align: center;
+            overflow: hidden;
+        }
+
+        #action-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            max-width: 500px;
+            position: relative;
+            z-index: 10;
+            padding: var(--padding-base);
+            background-color: #fff;
+            border-radius: var(--border-radius);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            gap: 15px;
+        }
+
+        #start-button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 18px 35px;
+            font-size: 18px;
+            font-weight: 500;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            box-shadow: var(--button-shadow);
+            transition: background-color 0.3s ease, transform 0.1s ease;
+            width: 100%;
+            max-width: 300px;
+        }
+
+        #start-button:hover {
+            background-color: #005bb5;
+        }
+
+        model-viewer {
+            width: 100vw;
+            height: 100vh;
+            background-color: white;
+            display: none;
+            position: fixed; /* Adicionado para garantir que ocupe a tela toda */
+            top: 0;
+            left: 0;
+            z-index: 15;
+        }
+
+        #close-button {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #fff;
+            color: #000;
+            border: none;
+            font-size: 24px;
+            font-weight: bold;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            cursor: pointer;
+            z-index: 20;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+            display: none;
+        }
+    </style>
 </head>
 <body>
+    <div id="action-container">
+        <button id="start-button">Aponte a câmera para uma superfície plana e clique aqui para visualizar a demonstração em vídeo.</button>
+    </div>
 
-    <h1>Teste do Forno de Pizza</h1>
+    <button id="close-button">&times;</button>
 
     <model-viewer
-        src="https://raw.githubusercontent.com/julianambatista/PizzaOven/main/pizza_oven_resized.glb"
-        ios-src="https://raw.githubusercontent.com/julianambatista/PizzaOven/main/pizza_oven_resized.usdz"
+        id="viewer"
+        src="https://cdn.jsdelivr.net/gh/julianambatista/PizzaOven@main/pizza_oven_resized.glb"
+        ios-src="https://cdn.jsdelivr.net/gh/julianambatista/PizzaOven@main/pizza_oven_resized.usdz"
         alt="Visualização do Forno de Pizza"
         ar
         camera-controls
-        style="width: 80vw; height: 60vh; border: 1px solid #ccc;">
+        autoplay
+        animation-name="*">
     </model-viewer>
 
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const startButton = document.getElementById('start-button');
+            const closeButton = document.getElementById('close-button');
+            const modelViewer = document.getElementById('viewer');
+            const actionContainer = document.getElementById('action-container');
+
+            startButton.addEventListener('click', () => {
+                actionContainer.style.display = 'none';
+                modelViewer.style.display = 'block';
+                closeButton.style.display = 'block';
+            });
+
+            closeButton.addEventListener('click', () => {
+                modelViewer.style.display = 'none';
+                closeButton.style.display = 'none';
+                actionContainer.style.display = 'flex';
+            });
+        });
+    </script>
 </body>
 </html>
