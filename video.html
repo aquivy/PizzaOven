@@ -70,7 +70,7 @@
             height: 100vh;
             background-color: white;
             display: none;
-            position: fixed;
+            position: fixed; /* Adicionado para garantir que ocupe a tela toda */
             top: 0;
             left: 0;
             z-index: 15;
@@ -80,7 +80,7 @@
             position: fixed;
             top: 20px;
             right: 20px;
-            background: rgba(255, 255, 255, 0.8);
+            background: #fff;
             color: #000;
             border: none;
             font-size: 24px;
@@ -108,8 +108,8 @@
         ios-src="https://cdn.jsdelivr.net/gh/julianambatista/PizzaOven@main/forno.usdz"
         alt="Visualização do Forno de Pizza"
         ar
-        camera-controls
         autoplay
+        camera-controls
         animation-name="*">
     </model-viewer>
 
