@@ -70,17 +70,19 @@
             height: 100vh;
             background-color: white;
             display: none;
-            position: fixed; /* Adicionado para garantir que ocupe a tela toda */
+            position: fixed;
             top: 0;
             left: 0;
             z-index: 15;
+            /* A cor de fundo do poster */
+            --poster-color: #f4f6f8;
         }
 
         #close-button {
             position: fixed;
             top: 20px;
             right: 20px;
-            background: #fff;
+            background: rgba(255, 255, 255, 0.8);
             color: #000;
             border: none;
             font-size: 24px;
@@ -108,10 +110,10 @@
         ios-src="https://cdn.jsdelivr.net/gh/julianambatista/PizzaOven@main/forno.usdz"
         alt="Visualização do Forno de Pizza"
         ar
-        autoplay
         camera-controls
-        animation-name="*">
-    </model-viewer>
+        autoplay
+        animation-name="*"
+        loading="eager"  poster="https://via.placeholder.com/400.png?text=Carregando+Forno+3D..." reveal="auto"> </model-viewer>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
