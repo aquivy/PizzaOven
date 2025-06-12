@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Forno de Pizza - Visualização 3D (Teste Simplificado)</title>
+    <title>Forno de Pizza - Visualização 3D</title>
     <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
     <style>
         :root {
@@ -70,9 +70,6 @@
             height: 100vh;
             background-color: white;
             display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
         }
 
         #close-button {
@@ -103,31 +100,16 @@
 
     <model-viewer
         id="viewer"
-        src="https://cdn.jsdelivr.net/gh/julianambatista/PizzaOven@main/forno.glb"
+        src="https://raw.githubusercontent.com/julianambatista/PizzaOven/main/forno.glb"
         alt="Visualização do Forno de Pizza"
         autoplay
-        camera-controls>
-    </model-viewer>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const startButton = document.getElementById('start-button');
-            const closeButton = document.getElementById('close-button');
-            const modelViewer = document.getElementById('viewer');
-            const actionContainer = document.getElementById('action-container');
-
-            startButton.addEventListener('click', () => {
-                actionContainer.style.display = 'none';
-                modelViewer.style.display = 'block';
-                closeButton.style.display = 'block';
-            });
-
-            closeButton.addEventListener('click', () => {
-                modelViewer.style.display = 'none';
-                closeButton.style.display = 'none';
-                actionContainer.style.display = 'flex';
-            });
-        });
-    </script>
-</body>
-</html>
+        animation-name="*"
+        disable-zoom
+        disable-pan
+        disable-tap
+        camera-controls
+        interaction-prompt="none"
+        environment-image="neutral"
+        exposure="1.0"
+        shadow-intensity="1"
+        camera-orbit="0deg 80deg 6m
