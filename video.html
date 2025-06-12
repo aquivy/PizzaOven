@@ -100,7 +100,7 @@
 
     <model-viewer
         id="viewer"
-        src="https://raw.githubusercontent.com/julianambatista/PizzaOven/main/forno.glb"
+        src="https://raw.githubusercontent.com/julianambatista/PizzaOven/main/pizza%20oven_resized.glb"
         alt="Visualização do Forno de Pizza"
         autoplay
         animation-name="*"
@@ -112,4 +112,30 @@
         environment-image="neutral"
         exposure="1.0"
         shadow-intensity="1"
-        camera-orbit="0deg 80deg 6m
+        camera-orbit="0deg 80deg 6m"
+        min-camera-orbit="0deg 80deg 6m"
+        max-camera-orbit="0deg 80deg 6m">
+    </model-viewer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const startButton = document.getElementById('start-button');
+            const closeButton = document.getElementById('close-button');
+            const modelViewer = document.getElementById('viewer');
+            const actionContainer = document.getElementById('action-container');
+
+            startButton.addEventListener('click', () => {
+                actionContainer.style.display = 'none';
+                modelViewer.style.display = 'block';
+                closeButton.style.display = 'block';
+            });
+
+            closeButton.addEventListener('click', () => {
+                modelViewer.style.display = 'none';
+                closeButton.style.display = 'none';
+                actionContainer.style.display = 'flex';
+            });
+        });
+    </script>
+</body>
+</html>
