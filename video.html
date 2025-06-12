@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Forno de Pizza - Visualização 3D</title>
+    <title>Forno de Pizza - Visualização 3D (Teste Simplificado)</title>
     <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
     <style>
         :root {
@@ -73,16 +73,13 @@
             position: fixed;
             top: 0;
             left: 0;
-            z-index: 15;
-            /* A cor de fundo do poster */
-            --poster-color: #f4f6f8;
         }
 
         #close-button {
             position: fixed;
             top: 20px;
             right: 20px;
-            background: rgba(255, 255, 255, 0.8);
+            background: #fff;
             color: #000;
             border: none;
             font-size: 24px;
@@ -107,13 +104,10 @@
     <model-viewer
         id="viewer"
         src="https://cdn.jsdelivr.net/gh/julianambatista/PizzaOven@main/forno.glb"
-        ios-src="https://cdn.jsdelivr.net/gh/julianambatista/PizzaOven@main/forno.usdz"
         alt="Visualização do Forno de Pizza"
-        ar
-        camera-controls
         autoplay
-        animation-name="*"
-        loading="eager"  poster="https://via.placeholder.com/400.png?text=Carregando+Forno+3D..." reveal="auto"> </model-viewer>
+        camera-controls>
+    </model-viewer>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
